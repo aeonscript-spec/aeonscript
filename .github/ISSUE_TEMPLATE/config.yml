@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussion forum
+    url: https://github.com/aeonscript-spec/aeonscript/discussions
+    about: For open-ended questions, design discussions, and community Q&A.
+  - name: Specification
+    url: https://github.com/aeonscript-spec/aeonscript/blob/main/spec/SPEC-v0.1.md
+    about: Read the current specification before opening a spec issue.
