@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeonScript — Open standard for DNA-based archival</title>
+<meta name="description" content="AeonScript is an open standard for archiving information on DNA. 7-layer architecture, AI-native codec, self-describing format. Built for millennia.">
+<meta property="og:title" content="AeonScript">
+<meta property="og:description" content="The open standard for archiving humanity in DNA.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://aeonscript.org">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23000'/%3E%3Cpath d='M9 8 Q16 16 23 8 M9 16 Q16 24 23 16 M9 24 Q16 32 23 24' stroke='%2300d4a8' fill='none' stroke-width='1.5'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-card: #101013;
+    --border: #1d1d22;
+    --text: #e8e8ec;
+    --text-dim: #8a8a96;
+    --text-faint: #4a4a55;
+    --accent: #00d4a8;
+    --accent-dim: #008a6f;
+    --warn: #f5a623;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  code, .mono { font-family: "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace; }
+
+  /* Layout */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 96px 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+
+  /* Nav */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(10, 10, 11, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; max-width: 1100px; margin: 0 auto; }
+  .logo { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; }
+  .logo-mark { width: 22px; height: 22px; }
+  .nav-links { display: flex; gap: 32px; font-size: 14px; }
+  .nav-links a { color: var(--text-dim); text-decoration: none; transition: color .15s; }
+  .nav-links a:hover { color: var(--text); }
+  @media (max-width: 720px) { .nav-links { display: none; } }
+
+  /* Hero */
+  .hero { padding: 120px 0 80px; text-align: left; position: relative; overflow: hidden; }
+  .hero h1 {
+    font-size: clamp(40px, 7vw, 76px);
+    line-height: 1.02; letter-spacing: -0.04em; font-weight: 600;
+    background: linear-gradient(180deg, #ffffff 0%, #a0a0b0 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 24px;
+  }
+  .hero h1 em { font-style: normal; color: var(--accent); -webkit-text-fill-color: var(--accent); }
+  .hero .lede {
+    font-size: clamp(18px, 2vw, 22px); color: var(--text-dim); max-width: 680px; line-height: 1.5;
+    margin-bottom: 40px;
+  }
+  .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    padding: 12px 22px; border-radius: 8px; font-size: 14px; font-weight: 500;
+    text-decoration: none; transition: all .15s; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary { background: var(--accent); color: #001a14; }
+  .btn-primary:hover { background: #00f0c0; transform: translateY(-1px); }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--text-dim); background: var(--bg-card); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px;
+    background: rgba(0, 212, 168, 0.08); border: 1px solid rgba(0, 212, 168, 0.25);
+    border-radius: 100px; font-size: 12px; color: var(--accent);
+    margin-bottom: 32px; font-family: "SF Mono", monospace;
+  }
+  .badge::before {
+    content: ""; width: 6px; height: 6px; background: var(--accent); border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* Helix decoration */
+  .helix {
+    position: absolute; right: -120px; top: 50%; transform: translateY(-50%);
+    width: 380px; height: 600px; opacity: 0.15; pointer-events: none;
+  }
+  @media (max-width: 900px) { .helix { display: none; } }
+
+  /* Numbers */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  @media (max-width: 720px) { .stats { grid-template-columns: 1fr; } }
+  .stat { padding: 32px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
+  .stat-num { font-size: 44px; font-weight: 600; color: var(--accent); letter-spacing: -0.03em; }
+  .stat-label { font-size: 14px; color: var(--text-dim); margin-top: 8px; }
+  .stat-desc { font-size: 13px; color: var(--text-faint); margin-top: 12px; line-height: 1.5; }
+
+  /* Section headers */
+  .section-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--accent); margin-bottom: 12px; font-family: "SF Mono", monospace; }
+  h2 { font-size: clamp(28px, 4vw, 44px); letter-spacing: -0.03em; font-weight: 600; margin-bottom: 16px; line-height: 1.1; }
+  .section-lede { font-size: 18px; color: var(--text-dim); max-width: 680px; margin-bottom: 48px; }
+
+  /* Architecture */
+  .layers { display: flex; flex-direction: column; gap: 6px; max-width: 720px; margin-top: 32px; }
+  .layer {
+    display: grid; grid-template-columns: 80px 140px 1fr;
+    align-items: center; gap: 20px; padding: 20px 24px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+    transition: all .2s;
+  }
+  .layer:hover { border-color: var(--accent-dim); }
+  .layer-id { font-family: monospace; font-size: 14px; color: var(--accent); font-weight: 600; }
+  .layer-name { font-size: 15px; font-weight: 500; }
+  .layer-desc { font-size: 13px; color: var(--text-dim); }
+  .layer.implemented { border-left: 2px solid var(--accent); }
+  .layer.planned { opacity: 0.55; }
+  @media (max-width: 600px) {
+    .layer { grid-template-columns: 1fr; gap: 4px; }
+  }
+
+  /* Code block */
+  .code-block {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 28px; font-size: 13.5px; overflow-x: auto; margin-top: 24px;
+    font-family: "SF Mono", "JetBrains Mono", monospace; line-height: 1.7;
+  }
+  .code-block .c { color: var(--text-faint); }    /* comment */
+  .code-block .k { color: #ff8a65; }              /* keyword */
+  .code-block .s { color: var(--accent); }        /* string */
+  .code-block .n { color: #e8e8ec; }              /* normal */
+
+  /* Cards grid */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .card {
+    padding: 28px; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; transition: border-color .15s;
+  }
+  .card:hover { border-color: var(--accent-dim); }
+  .card-icon {
+    width: 36px; height: 36px; background: rgba(0, 212, 168, 0.1);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px; color: var(--accent); font-size: 18px;
+  }
+  .card h3 { font-size: 17px; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .card p { font-size: 14px; color: var(--text-dim); line-height: 1.55; }
+
+  /* Status */
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    padding: 20px 24px; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; flex-wrap: wrap;
+  }
+  .status-item { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.ok { background: var(--accent); }
+  .dot.pending { background: var(--warn); }
+
+  /* CTA section */
+  .cta-box {
+    background: linear-gradient(135deg, rgba(0, 212, 168, 0.08), rgba(0, 138, 111, 0.04));
+    border: 1px solid rgba(0, 212, 168, 0.25);
+    border-radius: 16px; padding: 56px 40px; text-align: center;
+  }
+  .cta-box h2 { margin-bottom: 16px; }
+  .cta-box p { color: var(--text-dim); margin-bottom: 32px; max-width: 540px; margin-left: auto; margin-right: auto; }
+
+  /* Footer */
+  footer { padding: 64px 0 48px; }
+  .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; }
+  @media (max-width: 720px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+  .footer-col h4 { font-size: 13px; color: var(--text); margin-bottom: 16px; font-weight: 600; }
+  .footer-col a { display: block; color: var(--text-dim); text-decoration: none; font-size: 14px; margin-bottom: 10px; }
+  .footer-col a:hover { color: var(--text); }
+  .footer-meta { color: var(--text-faint); font-size: 13px; margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+
+  /* utilities */
+  .quote { font-style: italic; color: var(--text); font-size: 18px; padding-left: 20px; border-left: 2px solid var(--accent); margin: 32px 0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">
+      <svg class="logo-mark" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 6 Q16 16 26 6 M6 16 Q16 26 26 16 M6 26 Q16 36 26 26" stroke="#00d4a8" fill="none" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      AeonScript
+    </div>
+    <div class="nav-links">
+      <a href="#problem">Problem</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#status">Status</a>
+      <a href="https://github.com/aeonscript-spec/aeonscript">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <span class="badge">v0.1 · early draft · open spec</span>
+    <h1>An open standard<br>for archiving humanity <em>in DNA</em>.</h1>
+    <p class="lede">
+      AeonScript is a layered, self-describing format for writing information onto DNA — engineered to survive millennia, readable by any conformant decoder, owned by no one.
+    </p>
+    <div class="hero-ctas">
+      <a class="btn btn-primary" href="https://github.com/aeonscript-spec/aeonscript">View on GitHub →</a>
+      <a class="btn btn-secondary" href="https://github.com/aeonscript-spec/aeonscript/blob/main/spec/SPEC-v0.1.md">Read the spec</a>
+      <a class="btn btn-secondary" href="https://github.com/aeonscript-spec/aeonscript/blob/main/MANIFESTO.md">Manifesto</a>
+    </div>
+
+    <svg class="helix" viewBox="0 0 100 400" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="#00d4a8" stroke-width="1" fill="none">
+        <path d="M20 0 Q50 25 80 50 Q50 75 20 100 Q50 125 80 150 Q50 175 20 200 Q50 225 80 250 Q50 275 20 300 Q50 325 80 350 Q50 375 20 400"/>
+        <path d="M80 0 Q50 25 20 50 Q50 75 80 100 Q50 125 20 150 Q50 175 80 200 Q50 225 20 250 Q50 275 80 300 Q50 325 20 350 Q50 375 80 400"/>
+        <line x1="20" y1="0" x2="80" y2="0"/>
+        <line x1="80" y1="50" x2="20" y2="50"/>
+        <line x1="20" y1="100" x2="80" y2="100"/>
+        <line x1="80" y1="150" x2="20" y2="150"/>
+        <line x1="20" y1="200" x2="80" y2="200"/>
+        <line x1="80" y1="250" x2="20" y2="250"/>
+        <line x1="20" y1="300" x2="80" y2="300"/>
+        <line x1="80" y1="350" x2="20" y2="350"/>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section id="problem">
+  <div class="container">
+    <div class="section-label">The problem</div>
+    <h2>Memory is the first thing<br>civilizations lose.</h2>
+    <p class="section-lede">
+      We produce 120 zettabytes of data per year. We can store ~10 % of it. Of what we store, almost nothing will be readable a century from now. The medium itself decays — and the formats become orphaned.
+    </p>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">215 PB</div>
+        <div class="stat-label">per gram of DNA</div>
+        <div class="stat-desc">DNA's theoretical storage density is ~10⁶ × denser than the best silicon. Demonstrated: 1 EB/cm³ (Microsoft, 2020).</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">~500 yrs</div>
+        <div class="stat-label">stable at room temperature</div>
+        <div class="stat-desc">Dry, lyophilized DNA degrades 1000× slower than magnetic tape. Encapsulated in silica beads: millennia.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">0 W</div>
+        <div class="stat-label">energy in storage</div>
+        <div class="stat-desc">No spinning disks, no refresh cycles. Cold-tier data centers consume ~2 % of global electricity. DNA could erase that.</div>
+      </div>
+    </div>
+
+    <blockquote class="quote">
+      Today, every major DNA storage vendor — Microsoft, Twist, Catalog — uses a different proprietary encoding. A file written by one cannot be read by another. AeonScript is the open standard that fixes this, before the market is captured.
+    </blockquote>
+  </div>
+</section>
+
+<section id="architecture">
+  <div class="container">
+    <div class="section-label">Architecture</div>
+    <h2>Seven layers,<br>independently versionable.</h2>
+    <p class="section-lede">
+      Like OSI for networking. Each layer can evolve without breaking the others. The wire format is self-describing — a 2030 reader will still parse a 2230 file, because the file itself declares its codec.
+    </p>
+
+    <div class="layers">
+      <div class="layer planned"><div class="layer-id">L7</div><div class="layer-name">Application</div><div class="layer-desc">Domain formats — PDF/A, IIIF, FASTA, Wiki</div></div>
+      <div class="layer planned"><div class="layer-id">L6</div><div class="layer-name">Presentation</div><div class="layer-desc">Compression, encryption, serialization</div></div>
+      <div class="layer implemented"><div class="layer-id">L5</div><div class="layer-name">Session</div><div class="layer-desc">Self-describing semantic tags — every block declares its codec</div></div>
+      <div class="layer implemented"><div class="layer-id">L4</div><div class="layer-name">Transport</div><div class="layer-desc">Reed-Solomon RS(255,223) over GF(256) — corrects up to 16 byte errors per block</div></div>
+      <div class="layer planned"><div class="layer-id">L3</div><div class="layer-name">Network</div><div class="layer-desc">PCR-primer random access — retrieve one file from a library of millions</div></div>
+      <div class="layer planned"><div class="layer-id">L2</div><div class="layer-name">Data Link</div><div class="layer-desc">Strand &amp; reading-frame multiplexing — multiple messages on one molecule</div></div>
+      <div class="layer implemented"><div class="layer-id">L1</div><div class="layer-name">Physical</div><div class="layer-desc">4-letter alphabet, constraint-aware encoding, PRBS scrambler</div></div>
+    </div>
+
+    <p style="margin-top: 24px; font-size: 13px; color: var(--text-faint);">
+      <span style="display:inline-block; width: 12px; height: 2px; background: var(--accent); margin-right: 6px; vertical-align: middle;"></span> implemented in v0.1 reference codec &nbsp;·&nbsp; planned for v0.2
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="section-label">Try it</div>
+    <h2>Encode a payload in three lines.</h2>
+    <p class="section-lede">
+      The Python reference is pure-stdlib — no external dependencies for the core codec. A Node.js smoke test demonstrates the L1+L5 round-trip in any environment.
+    </p>
+
+    <pre class="code-block">
+<span class="c"># Install</span>
+<span class="k">$</span> <span class="n">git clone https://github.com/aeonscript-spec/aeonscript</span>
+<span class="k">$</span> <span class="n">cd aeonscript/reference &amp;&amp; pip install -e .</span>
+
+<span class="c"># Encode a file as DNA oligos</span>
+<span class="k">&gt;&gt;&gt;</span> <span class="k">from</span> <span class="n">aeonscript</span> <span class="k">import</span> <span class="n">encode_file, decode_oligos</span>
+<span class="k">&gt;&gt;&gt;</span> <span class="n">oligos = encode_file(</span><span class="s">"my_archive.txt"</span><span class="n">)</span>
+<span class="k">&gt;&gt;&gt;</span> <span class="k">print</span><span class="n">(</span><span class="k">f</span><span class="s">"Encoded into {len(oligos)} oligos of ~200 bases each"</span><span class="n">)</span>
+
+<span class="c"># Round-trip</span>
+<span class="k">&gt;&gt;&gt;</span> <span class="n">decode_oligos(oligos) == </span><span class="k">open</span><span class="n">(</span><span class="s">"my_archive.txt"</span><span class="n">, </span><span class="s">"rb"</span><span class="n">).read()</span>
+<span class="n">True</span>
+</pre>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="section-label">Design principles</div>
+    <h2>Built to outlive its authors.</h2>
+
+    <div class="cards" style="margin-top: 32px;">
+      <div class="card">
+        <div class="card-icon">🔓</div>
+        <h3>Open by default</h3>
+        <p>Spec under CC-BY-SA, code under MIT. No royalties, no NDAs, no premium tier.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📜</div>
+        <h3>Self-describing</h3>
+        <p>Each block carries a semantic tag declaring its own codec version. No manual required in 2230.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🛡️</div>
+        <h3>Integrity by default</h3>
+        <p>Reed-Solomon inside, LDPC across blocks, methylation-channel hash for silent-corruption detection.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🧬</div>
+        <h3>Bio-safe</h3>
+        <p>Conformant encoders must screen against pathogen databases (IGSC) before emitting any oligo for synthesis.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>AI-native</h3>
+        <p>The L4+ codec is designed to be driven by genomic foundation models (Evo 2, Caduceus) for near-Shannon density.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏛️</div>
+        <h3>Institutional governance</h3>
+        <p>Designed for adoption by libraries, archives, and standards bodies — not vendors.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="status">
+  <div class="container">
+    <div class="section-label">Status</div>
+    <h2>Where we are.</h2>
+
+    <div class="status-bar" style="margin-top: 24px;">
+      <div class="status-item"><span class="dot ok"></span> Spec v0.1 published</div>
+      <div class="status-item"><span class="dot ok"></span> Python reference codec</div>
+      <div class="status-item"><span class="dot ok"></span> Node.js smoke test</div>
+      <div class="status-item"><span class="dot ok"></span> CI / templates / security policy</div>
+      <div class="status-item"><span class="dot pending"></span> v0.2: L2 + L3 + Goldman codec</div>
+      <div class="status-item"><span class="dot pending"></span> Physical demo (Twist synthesis)</div>
+    </div>
+
+    <p style="margin-top: 32px; color: var(--text-dim); max-width: 680px;">
+      v0.1 is an <em>early draft</em>. The L1 / L4 / L5 layers are normatively specified and have a working reference implementation. L2 / L3 / L6 / L7 are described at the interface level only. See the <a href="https://github.com/aeonscript-spec/aeonscript/blob/main/ROADMAP.md" style="color: var(--accent);">roadmap</a> for what's next.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="cta-box">
+      <h2>Build the archive.</h2>
+      <p>If you work in bioinformatics, theory of information, archival science, or you simply believe the memory of humanity shouldn't be proprietary — there is a place for you here.</p>
+      <div class="hero-ctas" style="justify-content: center;">
+        <a class="btn btn-primary" href="https://github.com/aeonscript-spec/aeonscript">Star &amp; watch on GitHub</a>
+        <a class="btn btn-secondary" href="https://github.com/aeonscript-spec/aeonscript/blob/main/CONTRIBUTING.md">How to contribute</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="logo" style="margin-bottom: 16px;">
+          <svg class="logo-mark" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 6 Q16 16 26 6 M6 16 Q16 26 26 16 M6 26 Q16 36 26 26" stroke="#00d4a8" fill="none" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          AeonScript
+        </div>
+        <p style="color: var(--text-dim); font-size: 14px; max-width: 280px;">
+          The open standard for archiving information on DNA. Built for millennia.
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>Project</h4>
+        <a href="https://github.com/aeonscript-spec/aeonscript/blob/main/MANIFESTO.md">Manifesto</a>
+        <a href="https://github.com/aeonscript-spec/aeonscript/blob/main/spec/SPEC-v0.1.md">Specification</a>
+        <a href="https://github.com/aeonscript-spec/aeonscript/blob/main/ROADMAP.md">Roadmap</a>
+      </div>
+      <div class="footer-col">
+        <h4>Develop</h4>
+        <a href="https://github.com/aeonscript-spec/aeonscript">GitHub</a>
+        <a href="https://github.com/aeonscript-spec/aeonscript/blob/main/CONTRIBUTING.md">Contributing</a>
+        <a href="https://github.com/aeonscript-spec/aeonscript/issues">Issues</a>
+      </div>
+      <div class="footer-col">
+        <h4>Community</h4>
+        <a href="https://github.com/aeonscript-spec/aeonscript/discussions">Discussions</a>
+        <a href="https://github.com/aeonscript-spec/aeonscript/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a>
+        <a href="https://github.com/aeonscript-spec/aeonscript/blob/main/.github/SECURITY.md">Security</a>
+      </div>
+    </div>
+    <div class="footer-meta">
+      <div>© 2026 The AeonScript Contributors · MIT &amp; CC-BY-SA 4.0</div>
+      <div class="mono">spec v0.1 · main</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
