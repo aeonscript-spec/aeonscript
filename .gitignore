@@ -25,3 +25,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Local-only drafts (not for the public repo)
+.launch-drafts/
