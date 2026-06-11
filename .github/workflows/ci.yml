@@ -79,6 +79,42 @@ jobs:
         run: ruff check reference/aeonscript/ reference/tests/ reference/examples/
 
   # ------------------------------------------------------------------
+  # Rust reference codec: builds + runs tests + smoke example.
+  # The Rust crate is a v0.1 skeleton (L1+L5 implemented, L4 passthrough).
+  # ------------------------------------------------------------------
+  rust-tests:
+    name: Rust reference codec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cargo check
+        working-directory: reference-rs
+        run: cargo check --all-targets
+
+      - name: Cargo test
+        working-directory: reference-rs
+        run: cargo test
+
+      - name: Cargo run smoke example
+        working-directory: reference-rs
+        run: cargo run --example smoke_test
+
+      - name: Cargo fmt --check
+        working-directory: reference-rs
+        run: cargo fmt -- --check
+        continue-on-error: true  # advisory at v0.1
+
+      - name: Cargo clippy
+        working-directory: reference-rs
+        run: cargo clippy --all-targets -- -D warnings
+        continue-on-error: true  # advisory at v0.1
+
+  # ------------------------------------------------------------------
   # Spec sanity: ensures spec files are valid Markdown and reference the
   # right version strings.
   # ------------------------------------------------------------------
