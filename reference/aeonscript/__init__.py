@@ -18,6 +18,7 @@ from .biosafety import (
 )
 from .decoder import decode_oligos
 from .encoder import encode_bytes, encode_file
+from .goldman import bytes_to_goldman_dna, goldman_dna_to_bytes
 from .physical import bits_to_dna, dna_to_bits
 from .semantic import make_tag, parse_tag
 
@@ -36,6 +37,8 @@ __all__ = [
     "screen_oligos",
     "BioSafetyViolation",
     "HazardMatch",
+    "bytes_to_goldman_dna",
+    "goldman_dna_to_bytes",
     "__version__",
     "__spec_version__",
 ]

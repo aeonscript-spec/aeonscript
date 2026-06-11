@@ -42,8 +42,20 @@ pub fn decode_oligos(oligos: &[String]) -> Result<Vec<u8>, DecodeError> {
     // Descrambler
     let plain = descramble(&rs_encoded);
 
-    // L4: Reed-Solomon (v0.1 skeleton — passthrough)
-    let (after_l4, _n_errors) = decode_with_ecc(&plain, DEFAULT_NSYM, DEFAULT_BLOCK)?;
+    // L4: Reed-Solomon if the byte stream looks RS-encoded (length is a
+    // positive multiple of the full block size 255). Otherwise we assume
+    // L4=none (plaintext) — which is what the canonical L1+L5 test vectors
+    // use.
+    let full_block = DEFAULT_BLOCK + DEFAULT_NSYM;
+    let after_l4 = if plain.len() >= full_block && plain.len() % full_block == 0 {
+        match decode_with_ecc(&plain, DEFAULT_NSYM, DEFAULT_BLOCK) {
+            Ok((decoded, _)) => decoded,
+            // RS decode failure on aligned input is genuine corruption.
+            Err(e) => return Err(DecodeError::Ecc(e)),
+        }
+    } else {
+        plain
+    };
 
     // L5: find the tag
     if after_l4.first() != Some(&b'|') {

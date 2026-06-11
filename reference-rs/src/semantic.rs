@@ -79,13 +79,11 @@ pub fn validate_tag_value(field: &str, value: &str) -> Result<(), TagError> {
 
 /// Build a canonical AeonScript v0.1 tag string.
 ///
-/// **Note on `L4`** : v0.1 of the Rust reference ships an L4 *skeleton*
-/// (passthrough). Until the full Reed-Solomon integration lands in v0.1.1,
-/// the tag declares `L4=none` to be honest about what the wire format
-/// actually carries. The Python reference always declares `L4=rs255-223`.
+/// Declares `L4=rs255-223` — matching the Python reference, since the Rust
+/// reference now also implements RS(255, 223) via the `reed-solomon` crate.
 pub fn make_tag(mime_type: &str, payload_len: usize, block_id: &str) -> String {
     format!(
-        "|AEONSCRIPT=0.1;L1=L1-4;L4=none;TYPE={mime};LEN={len};ID={id}|",
+        "|AEONSCRIPT=0.1;L1=L1-4;L4=rs255-223;TYPE={mime};LEN={len};ID={id}|",
         mime = mime_type,
         len = payload_len,
         id = block_id

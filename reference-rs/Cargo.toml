@@ -14,8 +14,8 @@ categories = ["compression", "encoding", "science"]
 authors = ["The AeonScript Contributors"]
 
 [dependencies]
-# Reed-Solomon: L4 codec via the well-maintained reed-solomon-erasure crate
-reed-solomon-erasure = "6.0"
+# Reed-Solomon: byte-level RS(n, k) over GF(256), matching the Python ref
+reed-solomon = "0.2"
 # Ergonomic error types
 thiserror = "1"
 # JSON for biosafety hazard DB loading

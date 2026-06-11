@@ -47,12 +47,19 @@ def decode_oligos(
         rs_encoded.extend(dna_to_bytes(oligo))
 
     # ---- Descramble (inverse of encoder PRBS) -------------------------
-    rs_encoded = descramble(bytes(rs_encoded))
+    descrambled = descramble(bytes(rs_encoded))
 
-    # ---- L4: Reed-Solomon decode ---------------------------------------
-    tagged_data, n_errors = decode_with_ecc(
-        rs_encoded, nsym=rs_parity, block_size=rs_block_size
-    )
+    # ---- L4: Reed-Solomon decode IF the stream looks RS-encoded -------
+    # An RS-encoded stream has length = N × (block_size + nsym) = N × 255.
+    # Otherwise the stream is plaintext (L4=none) — the canonical L1+L5
+    # test vectors at spec/test-vectors/vectors-l1-l5.json use this path.
+    full_block = rs_block_size + rs_parity
+    if len(descrambled) >= full_block and len(descrambled) % full_block == 0:
+        tagged_data, n_errors = decode_with_ecc(
+            descrambled, nsym=rs_parity, block_size=rs_block_size
+        )
+    else:
+        tagged_data, n_errors = descrambled, 0
 
     # ---- L5: parse and strip semantic tag ------------------------------
     # The tag starts with the byte '|' (0x7C) and ends at the next '|'.
