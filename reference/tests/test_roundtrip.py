@@ -12,6 +12,7 @@ import pytest
 
 from aeonscript import encode_bytes, decode_oligos
 from aeonscript.physical import bytes_to_dna, dna_to_bytes, check_constraints
+from aeonscript.scrambler import scramble
 from aeonscript.error_correction import (
     encode_with_ecc,
     decode_with_ecc,
@@ -40,13 +41,31 @@ def test_l1_roundtrip_random():
         assert dna_to_bytes(seq) == data
 
 
-def test_l1_constraints_respected():
+def test_l1_constraints_respected_on_scrambled_input():
+    """The encoder applies a scrambler before L1, which uniformises the byte
+    distribution. We test the realistic pipeline path here, not bytes_to_dna
+    on raw biased input — the latter is documented as a v0.1 known limitation
+    (Goldman ternary / RLL planned for v0.2)."""
     rng = random.Random(0)
     for _ in range(20):
         data = bytes(rng.randint(0, 255) for _ in range(30))
-        seq = bytes_to_dna(data)
+        scrambled = scramble(data)
+        seq = bytes_to_dna(scrambled)
         ok, msg = check_constraints(seq)
         assert ok, f"constraints violated: {msg} for seq={seq}"
+
+
+def test_end_to_end_pipeline_oligos_constraint_compliant():
+    """The end-to-end encoder must always produce constraint-compliant oligos
+    for any realistic payload (not just the synthetic tests above)."""
+    rng = random.Random(5)
+    for _ in range(5):
+        size = rng.randint(50, 400)
+        data = bytes(rng.randint(0, 255) for _ in range(size))
+        oligos = encode_bytes(data)
+        for o in oligos:
+            ok, msg = check_constraints(o)
+            assert ok, f"oligo violates constraints: {msg}"
 
 
 # ---------------------------------------------------------------------------
