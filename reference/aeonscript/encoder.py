@@ -27,6 +27,20 @@ DEFAULT_RS_PARITY = 32  # SPEC §3.1
 DEFAULT_RS_BLOCK = 223
 
 
+_FORBIDDEN_TAG_CHARS = (";", "=", "|")
+
+
+def _validate_tag_value(name: str, value: str) -> None:
+    """Raise ValueError if `value` contains characters reserved by the L5 wire format."""
+    bad = [c for c in _FORBIDDEN_TAG_CHARS if c in value]
+    if bad:
+        raise ValueError(
+            f"L5 tag value for {name} contains reserved characters {bad!r}: "
+            f"{value!r}. Per SPEC-v0.1 §4.5, the characters ';', '=', '|' "
+            f"are not permitted in tag values (escape sequences reserved for v0.2)."
+        )
+
+
 def _blake3_or_sha256(data: bytes) -> str:
     """Return a hash of the data. Uses BLAKE3 if available, else SHA-256."""
     try:
@@ -59,12 +73,18 @@ def encode_bytes(
         block_id = _blake3_or_sha256(data)[:24]  # short prefix
 
     # ---- L5: prepend semantic tag --------------------------------------
-    # NB: MIME types containing ';' (e.g. 'text/plain; charset=utf-8') would
-    # collide with the L5 field separator. The encoder strips them defensively;
-    # full escaping is reserved for v0.2.
-    safe_mime = mime_type.split(";")[0].strip()
+    # The L5 wire format uses ';' as the field separator and '=' as the
+    # key/value separator. In v0.1 these characters are forbidden in any
+    # value (escape sequences are reserved for v0.2). We reject loudly
+    # rather than silently truncate — losing the 'charset=utf-8' part of a
+    # MIME type would be a silent data corruption.
+    _validate_tag_value("mime_type", mime_type)
+    if extra_tag_fields:
+        for k, v in extra_tag_fields.items():
+            _validate_tag_value(f"extra_tag_fields[{k!r}]", v)
+
     tag = make_tag(
-        mime_type=safe_mime,
+        mime_type=mime_type,
         payload_len=len(data),
         block_id=block_id,
         CHECKSUM=_blake3_or_sha256(data),

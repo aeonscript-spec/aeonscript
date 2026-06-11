@@ -59,7 +59,7 @@ def main() -> int:
 
     oligos = encode_bytes(
         PASSAGE,
-        mime_type="text/plain; charset=utf-8",
+        mime_type="text/plain",  # v0.1: MIME params (;...) reserved for v0.2 escaping
         block_id="demo-fr-1",
         extra_tag_fields={
             "AUTHORS": "AeonScript Contributors",

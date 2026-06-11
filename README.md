@@ -2,9 +2,12 @@
 
 **Un standard ouvert d'archivage de l'information sur ADN.**
 
+[![CI](https://github.com/aeonscript-spec/aeonscript/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aeonscript-spec/aeonscript/actions/workflows/ci.yml)
 [![Spec version](https://img.shields.io/badge/spec-v0.1-blue)](spec/SPEC-v0.1.md)
 [![License](https://img.shields.io/badge/license-MIT%20%2B%20CC--BY--SA-green)](LICENSE)
 [![Status](https://img.shields.io/badge/status-early%20draft-orange)]()
+[![Site](https://img.shields.io/badge/site-aeonscript.org-00d4a8)](https://aeonscript.org)
+[![Discussions](https://img.shields.io/github/discussions/aeonscript-spec/aeonscript)](https://github.com/aeonscript-spec/aeonscript/discussions)
 
 ---
 

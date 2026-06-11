@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+title: "AeonScript: An open standard for DNA-based information archival"
+message: "If you use AeonScript in academic or technical work, please cite it as below."
+type: software
+authors:
+  - given-names: "Moustapha"
+    family-names: "Dramé"
+    affiliation: "Independent"
+    email: "contact@aeonscript.org"
+  - name: "The AeonScript Contributors"
+repository-code: "https://github.com/aeonscript-spec/aeonscript"
+url: "https://aeonscript.org"
+abstract: >-
+  AeonScript is a layered, self-describing open standard for archiving
+  arbitrary information on synthetic DNA. It defines a 7-layer architecture
+  (physical alphabet, multiplexing, random access, error correction, session
+  tags, presentation, application), normatively specifies L1, L4, and L5 in
+  v0.1, and ships with a Python reference implementation. The project is
+  designed to be readable for millennia, owned by no single vendor, and
+  governed by archival institutions in the long term.
+keywords:
+  - "DNA storage"
+  - "archival"
+  - "open standard"
+  - "bioinformatics"
+  - "information theory"
+  - "Reed-Solomon"
+license: "MIT"
+license-url: "https://github.com/aeonscript-spec/aeonscript/blob/main/LICENSE"
+version: "0.1.0"
+date-released: "2026-06-07"

@@ -167,9 +167,14 @@ Si vous êtes :
 
 ---
 
-## Signataires (sollicités, à confirmer)
+## Outreach targets (Phase 1)
 
-*La liste ci-dessous est l'ensemble des contributeurs/signataires à approcher en priorité. Elle est aspirationnelle au stade v0.1.*
+*Honnêteté préalable : aucune de ces institutions n'a encore été contactée
+au moment de la publication v0.1. Cette liste explicite **les institutions
+que ce projet cherche à engager** durant la Phase 1 de la roadmap (2026-2027).
+Elle est aspirationnelle. Une institution apparaissant ici ne signifie ni
+endorsement, ni partenariat, ni même prise de contact préalable — juste
+une cible de dialogue.*
 
 - Arc Institute (auteurs Evo 2)
 - European Bioinformatics Institute (EMBL-EBI)

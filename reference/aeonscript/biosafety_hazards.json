@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "spec_section": "SPEC-v0.1 §9",
+  "description": "Bio-safety hazard signature stub for AeonScript v0.1. This is a placeholder demonstrating the API contract. The signatures below are SYNTHETIC test patterns, NOT real pathogen sequences. A v0.2 production engine should integrate against the IGSC Harmonized Screening Protocol or an equivalent international service.",
+  "notes": [
+    "Real hazard databases (IGSC, Twist, IDT internal lists) are not publicly distributable.",
+    "These signatures are deliberately benign test patterns to exercise the screening pipeline.",
+    "Production conformance requires BLAST-grade similarity matching at >= 90% identity over >= 20 bp."
+  ],
+  "signatures": [
+    {
+      "id": "TEST-SIG-001",
+      "description": "Synthetic test pattern A (NOT a real hazard sequence)",
+      "sequence": "ACGTACGTACGTACGTACGT",
+      "length_bp": 20,
+      "category": "test"
+    },
+    {
+      "id": "TEST-SIG-002",
+      "description": "Synthetic test pattern B (NOT a real hazard sequence)",
+      "sequence": "CCCAAATTTGGGAAACCCAAA",
+      "length_bp": 21,
+      "category": "test"
+    },
+    {
+      "id": "TEST-SIG-003",
+      "description": "Synthetic test pattern C (NOT a real hazard sequence)",
+      "sequence": "TGATGATGATGATGATGATGAT",
+      "length_bp": 22,
+      "category": "test"
+    }
+  ]
+}

@@ -5,11 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AeonScript — Open standard for DNA-based archival</title>
 <meta name="description" content="AeonScript is an open standard for archiving information on DNA. 7-layer architecture, AI-native codec, self-describing format. Built for millennia.">
-<meta property="og:title" content="AeonScript">
-<meta property="og:description" content="The open standard for archiving humanity in DNA.">
+<meta property="og:title" content="AeonScript — Open standard for DNA-based archival">
+<meta property="og:description" content="A layered, self-describing format for writing data onto DNA. Built to outlive its authors.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://aeonscript.org">
+<meta property="og:image" content="https://aeonscript.org/og-image.svg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AeonScript — Open standard for DNA-based archival">
+<meta name="twitter:description" content="A layered, self-describing format for writing data onto DNA. Built to outlive its authors.">
+<meta name="twitter:image" content="https://aeonscript.org/og-image.svg">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23000'/%3E%3Cpath d='M9 8 Q16 16 23 8 M9 16 Q16 24 23 16 M9 24 Q16 32 23 24' stroke='%2300d4a8' fill='none' stroke-width='1.5'/%3E%3C/svg%3E">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "AeonScript",
+  "description": "An open standard for archiving information on synthetic DNA. Layered, self-describing, designed to remain readable for centuries.",
+  "url": "https://aeonscript.org",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Cross-platform",
+  "softwareVersion": "0.1.0",
+  "datePublished": "2026-06-07",
+  "license": "https://opensource.org/licenses/MIT",
+  "codeRepository": "https://github.com/aeonscript-spec/aeonscript",
+  "author": {
+    "@type": "Organization",
+    "name": "The AeonScript Contributors",
+    "url": "https://aeonscript.org"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "keywords": "DNA storage, archival, open standard, bioinformatics, Reed-Solomon, information theory"
+}
+</script>
 <style>
   :root {
     --bg: #0a0a0b;
@@ -185,6 +218,23 @@
 
   /* utilities */
   .quote { font-style: italic; color: var(--text); font-size: 18px; padding-left: 20px; border-left: 2px solid var(--accent); margin: 32px 0; }
+
+  /* Interactive demo widget */
+  .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 32px; }
+  @media (max-width: 760px) { .demo-grid { grid-template-columns: 1fr; } }
+  .demo-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .demo-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); }
+  #demo-input { background: #050507; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 14px; padding: 12px; resize: vertical; min-height: 100px; font-family: inherit; outline: none; }
+  #demo-input:focus { border-color: var(--accent); }
+  .demo-output { background: #050507; border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-size: 11.5px; line-height: 1.55; color: var(--text); min-height: 140px; max-height: 320px; overflow: auto; white-space: pre; word-break: break-all; }
+  .demo-stats { font-size: 12px; color: var(--text-faint); font-family: "SF Mono", monospace; }
+  .demo-actions { display: flex; align-items: center; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+  .demo-result { font-size: 14px; font-family: "SF Mono", monospace; color: var(--text-dim); }
+  .demo-details { margin-top: 32px; }
+  .demo-details summary { cursor: pointer; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text-dim); transition: color .15s; }
+  .demo-details summary:hover { color: var(--text); }
+  .demo-details[open] summary { color: var(--text); border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none; }
+  .demo-details[open] .code-block { border-top-left-radius: 0; border-top-right-radius: 0; margin-top: 0; border-top: none; }
 </style>
 </head>
 <body>
@@ -216,7 +266,7 @@
     <div class="hero-ctas">
       <a class="btn btn-primary" href="https://github.com/aeonscript-spec/aeonscript">View on GitHub →</a>
       <a class="btn btn-secondary" href="https://github.com/aeonscript-spec/aeonscript/blob/main/spec/SPEC-v0.1.md">Read the spec</a>
-      <a class="btn btn-secondary" href="https://github.com/aeonscript-spec/aeonscript/blob/main/MANIFESTO.md">Manifesto</a>
+      <a class="btn btn-secondary" href="#try-it-live">Try it live ↓</a>
     </div>
 
     <svg class="helix" viewBox="0 0 100 400" xmlns="http://www.w3.org/2000/svg">
@@ -292,30 +342,236 @@
   </div>
 </section>
 
-<section>
+<section id="try-it-live">
   <div class="container">
-    <div class="section-label">Try it</div>
-    <h2>Encode a payload in three lines.</h2>
+    <div class="section-label">Try it — live in your browser</div>
+    <h2>Encode anything into DNA, right now.</h2>
     <p class="section-lede">
-      The Python reference is pure-stdlib — no external dependencies for the core codec. A Node.js smoke test demonstrates the L1+L5 round-trip in any environment.
+      Type a message below. The L1 + L5 encoder runs locally in your browser — same algorithms as the Python reference, no server roundtrip, no data leaves this page.
     </p>
 
-    <pre class="code-block">
-<span class="c"># Install</span>
-<span class="k">$</span> <span class="n">git clone https://github.com/aeonscript-spec/aeonscript</span>
-<span class="k">$</span> <span class="n">cd aeonscript/reference &amp;&amp; pip install -e .</span>
+    <div class="demo-grid">
+      <div class="demo-card">
+        <div class="demo-label">1. Your payload</div>
+        <textarea id="demo-input" rows="5" spellcheck="false">The first message I want to preserve for a thousand years.</textarea>
+        <div class="demo-stats" id="demo-input-stats">— bytes</div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-label">2. DNA oligos (output)</div>
+        <pre id="demo-output" class="demo-output mono">Click "Encode" to see the oligos.</pre>
+        <div class="demo-stats" id="demo-output-stats">— oligos · — bases · — bits/base</div>
+      </div>
+    </div>
 
-<span class="c"># Encode a file as DNA oligos</span>
+    <div class="demo-actions">
+      <button class="btn btn-primary" id="demo-encode">Encode →</button>
+      <button class="btn btn-secondary" id="demo-roundtrip">Round-trip verify</button>
+      <button class="btn btn-secondary" id="demo-clear">Clear</button>
+      <span id="demo-result" class="demo-result"></span>
+    </div>
+
+    <p style="margin-top: 24px; font-size: 13px; color: var(--text-faint);">
+      Reference implementation: <a href="https://github.com/aeonscript-spec/aeonscript/blob/main/reference/" style="color: var(--accent);">Python</a> · <a href="https://github.com/aeonscript-spec/aeonscript/blob/main/reference/examples/smoke_test.js" style="color: var(--accent);">Node.js</a> · Same algorithms as below.
+    </p>
+
+    <details class="demo-details">
+      <summary>Or install the full Python reference (with Reed-Solomon)</summary>
+      <pre class="code-block">
+<span class="c"># Install</span>
+<span class="k">$</span> <span class="n">pip install -e git+https://github.com/aeonscript-spec/aeonscript@main#subdirectory=reference</span>
+
+<span class="c"># Use</span>
 <span class="k">&gt;&gt;&gt;</span> <span class="k">from</span> <span class="n">aeonscript</span> <span class="k">import</span> <span class="n">encode_file, decode_oligos</span>
 <span class="k">&gt;&gt;&gt;</span> <span class="n">oligos = encode_file(</span><span class="s">"my_archive.txt"</span><span class="n">)</span>
-<span class="k">&gt;&gt;&gt;</span> <span class="k">print</span><span class="n">(</span><span class="k">f</span><span class="s">"Encoded into {len(oligos)} oligos of ~200 bases each"</span><span class="n">)</span>
-
-<span class="c"># Round-trip</span>
 <span class="k">&gt;&gt;&gt;</span> <span class="n">decode_oligos(oligos) == </span><span class="k">open</span><span class="n">(</span><span class="s">"my_archive.txt"</span><span class="n">, </span><span class="s">"rb"</span><span class="n">).read()</span>
 <span class="n">True</span>
 </pre>
+    </details>
   </div>
 </section>
+
+<script>
+// AeonScript L1+L5 encoder — vanilla JS port of reference/examples/smoke_test.js
+// Same algorithms, same outputs, deterministic.
+(function() {
+  const BASE_PERMUTATIONS = [
+    ["A","C","G","T"], ["A","G","C","T"], ["T","C","G","A"],
+    ["C","A","T","G"], ["G","T","A","C"]
+  ];
+  const PREFIX_CODES = ["ACGT","AGCT","TCGA","CATG","GTAC"];
+  const FORBIDDEN_MOTIFS = ["GGGGGGGGGG", "ATATATATATAT"];
+  const MAX_HOMOPOLYMER = 8;
+  const GC_MIN = 0.25, GC_MAX = 0.75;
+  const SCRAMBLER_SEED = 0xDEADBEEF;
+
+  function byteToBases(byte, perm) {
+    let out = "";
+    for (const s of [0,2,4,6]) out += perm[(byte >> s) & 3];
+    return out;
+  }
+  function basesToByte(bases, perm) {
+    const inv = {}; perm.forEach((b,i)=>inv[b]=i);
+    let v = 0;
+    for (let i = 0; i < 4; i++) v |= inv[bases[i]] << (2*i);
+    return v;
+  }
+  function violates(seq) {
+    let run = 1;
+    for (let i = 1; i < seq.length; i++) {
+      if (seq[i] === seq[i-1]) { run++; if (run > MAX_HOMOPOLYMER) return true; }
+      else run = 1;
+    }
+    for (const m of FORBIDDEN_MOTIFS) if (seq.includes(m)) return true;
+    if (seq.length >= 10) {
+      let gc = 0; for (const b of seq) if (b === "G" || b === "C") gc++;
+      const ratio = gc / seq.length;
+      if (ratio < GC_MIN || ratio > GC_MAX) return true;
+    }
+    return false;
+  }
+  function bytesToDna(data) {
+    for (let i = 0; i < BASE_PERMUTATIONS.length; i++) {
+      let body = "";
+      for (const b of data) body += byteToBases(b, BASE_PERMUTATIONS[i]);
+      const candidate = PREFIX_CODES[i] + body;
+      if (!violates(candidate)) return candidate;
+    }
+    throw new Error("L1 constraints not satisfiable for this chunk");
+  }
+  function dnaToBytes(seq) {
+    const permIdx = PREFIX_CODES.indexOf(seq.slice(0,4));
+    if (permIdx < 0) throw new Error("Unknown permutation prefix");
+    const perm = BASE_PERMUTATIONS[permIdx];
+    const body = seq.slice(4);
+    const out = new Uint8Array(body.length / 4);
+    for (let i = 0; i < body.length; i += 4) out[i/4] = basesToByte(body.slice(i, i+4), perm);
+    return out;
+  }
+  function scramble(data) {
+    let state = SCRAMBLER_SEED >>> 0;
+    const out = new Uint8Array(data.length);
+    for (let i = 0; i < data.length; i++) {
+      state ^= (state << 13) >>> 0; state >>>= 0;
+      state ^= state >>> 17;
+      state ^= (state << 5) >>> 0; state >>>= 0;
+      out[i] = data[i] ^ (state & 0xFF);
+    }
+    return out;
+  }
+  function makeTag(payloadLen, blockId, mime) {
+    return `|AEONSCRIPT=0.1;L1=L1-4;L4=none;TYPE=${mime};LEN=${payloadLen};ID=${blockId}|`;
+  }
+  function encodeL1L5(payloadBytes, blockId, mime) {
+    const tag = makeTag(payloadBytes.length, blockId, mime);
+    const tagBytes = new TextEncoder().encode(tag);
+    const combined = new Uint8Array(tagBytes.length + payloadBytes.length);
+    combined.set(tagBytes, 0);
+    combined.set(payloadBytes, tagBytes.length);
+    const scrambled = scramble(combined);
+    const OLIGO_LEN = 200;
+    const bytesPerOligo = Math.floor((OLIGO_LEN - 4) / 4);
+    const oligos = [];
+    for (let i = 0; i < scrambled.length; i += bytesPerOligo) {
+      oligos.push(bytesToDna(scrambled.slice(i, i + bytesPerOligo)));
+    }
+    return { tag, oligos };
+  }
+  function decodeL1L5(oligos) {
+    let totalLen = 0;
+    const decodedChunks = oligos.map(o => dnaToBytes(o));
+    for (const c of decodedChunks) totalLen += c.length;
+    const all = new Uint8Array(totalLen);
+    let off = 0;
+    for (const c of decodedChunks) { all.set(c, off); off += c.length; }
+    const plain = scramble(all); // self-inverse
+    if (plain[0] !== 0x7C) throw new Error("missing '|' tag start");
+    const end = plain.indexOf(0x7C, 1);
+    const tagStr = new TextDecoder().decode(plain.slice(0, end + 1));
+    const fields = {};
+    for (const pair of tagStr.slice(1, -1).split(";")) {
+      const eq = pair.indexOf("=");
+      fields[pair.slice(0, eq)] = pair.slice(eq + 1);
+    }
+    const len = parseInt(fields.LEN, 10);
+    return { fields, payload: plain.slice(end + 1, end + 1 + len) };
+  }
+
+  // ---- UI wiring -----------------------------------------------------------
+  const $ = (id) => document.getElementById(id);
+  let lastOligos = null;
+
+  function updateInputStats() {
+    const text = $("demo-input").value;
+    const bytes = new TextEncoder().encode(text).length;
+    $("demo-input-stats").textContent = `${bytes} byte${bytes === 1 ? "" : "s"}`;
+  }
+
+  function runEncode() {
+    try {
+      const text = $("demo-input").value;
+      const bytes = new TextEncoder().encode(text);
+      const { tag, oligos } = encodeL1L5(bytes, "demo-block-1", "text/plain");
+      lastOligos = oligos;
+      const totalBases = oligos.reduce((s, o) => s + o.length, 0);
+      const density = bytes.length === 0 ? 0 : (bytes.length * 8 / totalBases);
+      const oligoLines = oligos.map((o, i) => {
+        const lbl = `[${String(i).padStart(2, "0")}]`;
+        return `${lbl} (${o.length}b) ${o}`;
+      }).join("\n");
+      $("demo-output").textContent = `# Semantic tag:\n${tag}\n\n# ${oligos.length} oligo${oligos.length === 1 ? "" : "s"}:\n${oligoLines}`;
+      $("demo-output-stats").textContent = `${oligos.length} oligos · ${totalBases} bases · ${density.toFixed(3)} bits/base`;
+      $("demo-result").textContent = "✓ encoded";
+      $("demo-result").style.color = "var(--accent)";
+    } catch (e) {
+      $("demo-output").textContent = `Error: ${e.message}`;
+      $("demo-result").textContent = "✗ failed";
+      $("demo-result").style.color = "var(--warn)";
+    }
+  }
+
+  function runRoundtrip() {
+    if (!lastOligos) { runEncode(); }
+    try {
+      const { fields, payload } = decodeL1L5(lastOligos);
+      const text = new TextDecoder().decode(payload);
+      const original = $("demo-input").value;
+      if (text === original) {
+        $("demo-result").textContent = `✓ Round-trip OK — recovered ${payload.length} bytes (${fields.LEN} declared in tag)`;
+        $("demo-result").style.color = "var(--accent)";
+      } else {
+        $("demo-result").textContent = `✗ MISMATCH (encoder bug — please report)`;
+        $("demo-result").style.color = "var(--warn)";
+      }
+    } catch (e) {
+      $("demo-result").textContent = `✗ Decode error: ${e.message}`;
+      $("demo-result").style.color = "var(--warn)";
+    }
+  }
+
+  function runClear() {
+    $("demo-input").value = "";
+    $("demo-output").textContent = "Click \"Encode\" to see the oligos.";
+    $("demo-output-stats").textContent = "— oligos · — bases · — bits/base";
+    $("demo-result").textContent = "";
+    lastOligos = null;
+    updateInputStats();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+  function init() {
+    if (!$("demo-input")) return;
+    $("demo-encode").addEventListener("click", runEncode);
+    $("demo-roundtrip").addEventListener("click", runRoundtrip);
+    $("demo-clear").addEventListener("click", runClear);
+    $("demo-input").addEventListener("input", updateInputStats);
+    updateInputStats();
+  }
+})();
+</script>
 
 <section>
   <div class="container">

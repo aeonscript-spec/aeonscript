@@ -7,10 +7,17 @@ Public API:
     encode_file(path, ...)  -> List[str]  oligos
     encode_bytes(data, ...) -> List[str]  oligos
     decode_oligos(oligos)   -> bytes      original payload
+    enforce_biosafety(oligos) -> None     raises BioSafetyViolation on match
 """
 
-from .encoder import encode_file, encode_bytes
+from .biosafety import (
+    BioSafetyViolation,
+    HazardMatch,
+    enforce_biosafety,
+    screen_oligos,
+)
 from .decoder import decode_oligos
+from .encoder import encode_bytes, encode_file
 from .physical import bits_to_dna, dna_to_bits
 from .semantic import make_tag, parse_tag
 
@@ -25,6 +32,10 @@ __all__ = [
     "dna_to_bits",
     "make_tag",
     "parse_tag",
+    "enforce_biosafety",
+    "screen_oligos",
+    "BioSafetyViolation",
+    "HazardMatch",
     "__version__",
     "__spec_version__",
 ]
