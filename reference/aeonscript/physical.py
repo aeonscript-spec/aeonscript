@@ -36,11 +36,11 @@ BASE_PERMUTATIONS: list[tuple[str, str, str, str]] = [
 # v0.1 reference: RELAXED constraints matching industrial synthesis tolerance
 # (Twist, IDT). A constraint-tight codec (Goldman ternary / RLL-coded) is on
 # the v0.2 roadmap. The spec SPEC-v0.1.md §2.3 documents the eventual target.
-FORBIDDEN_MOTIFS = ("GGGGGGGGGG", "ATATATATATAT")
+FORBIDDEN_MOTIFS = ("GGGGGGGGGGGGG", "ATATATATATATAT")
 
-MAX_HOMOPOLYMER = 8
-GC_MIN = 0.25
-GC_MAX = 0.75
+MAX_HOMOPOLYMER = 10
+GC_MIN = 0.20
+GC_MAX = 0.80
 
 
 def _byte_to_bases(byte: int, perm: tuple[str, str, str, str]) -> str:

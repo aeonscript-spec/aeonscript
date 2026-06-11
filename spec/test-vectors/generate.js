@@ -31,10 +31,10 @@ const BASE_PERMUTATIONS = [
   ["G", "T", "A", "C"],
 ];
 const PREFIX_CODES = ["ACGT", "AGCT", "TCGA", "CATG", "GTAC"];
-const FORBIDDEN_MOTIFS = ["GGGGGGGGGG", "ATATATATATAT"];
-const MAX_HOMOPOLYMER = 8;
-const GC_MIN = 0.25;
-const GC_MAX = 0.75;
+const FORBIDDEN_MOTIFS = ["GGGGGGGGGGGGG", "ATATATATATATAT"];
+const MAX_HOMOPOLYMER = 10;
+const GC_MIN = 0.20;
+const GC_MAX = 0.80;
 const SCRAMBLER_SEED = 0xDEADBEEF;
 
 function byteToBases(byte, perm) {

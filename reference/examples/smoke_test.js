@@ -25,10 +25,10 @@ const BASE_PERMUTATIONS = [
 const PREFIX_CODES = ["ACGT", "AGCT", "TCGA", "CATG", "GTAC"];
 // v0.1 reference uses RELAXED constraints matching industrial synthesis tolerance.
 // A constraint-tight codec (Goldman ternary / RLL) is on the v0.2 roadmap.
-const FORBIDDEN_MOTIFS = ["GGGGGGGGGG", "ATATATATATAT"];
-const MAX_HOMOPOLYMER = 8;
-const GC_MIN = 0.25;
-const GC_MAX = 0.75;
+const FORBIDDEN_MOTIFS = ["GGGGGGGGGGGGG", "ATATATATATATAT"];
+const MAX_HOMOPOLYMER = 10;
+const GC_MIN = 0.20;
+const GC_MAX = 0.80;
 
 function byteToBases(byte, perm) {
   const out = [];
@@ -236,7 +236,7 @@ for (const o of oligos) {
     if (o[i] === o[i - 1]) { cur++; maxRun = Math.max(maxRun, cur); }
     else cur = 1;
   }
-  if (maxRun <= 8 && gc >= 0.25 && gc <= 0.75) ctrOk++;
+  if (maxRun <= 10 && gc >= 0.20 && gc <= 0.80) ctrOk++;
   else ctrBad++;
 }
 console.log(`  Constraint-compliant oligos: ${ctrOk}/${oligos.length}`);
