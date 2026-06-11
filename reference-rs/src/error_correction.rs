@@ -35,12 +35,22 @@ pub fn rs_encode_msg(data: &[u8], nsym: usize) -> Result<Vec<u8>, EccError> {
 }
 
 /// Decode a single RS codeword. Returns (decoded_message_bytes, errors_corrected).
+///
+/// **v0.1 caveat**: the `reed-solomon` crate v0.2 does not expose an
+/// errors-corrected counter from its `Buffer` API, so we compare the
+/// original codeword to the corrected one to count differences. Slightly
+/// more work than the Python reference's `len(errata)` but byte-accurate.
 pub fn rs_decode_msg(codeword: &[u8], nsym: usize) -> Result<(Vec<u8>, usize), EccError> {
     let decoder = Decoder::new(nsym);
     let result = decoder
         .correct(codeword, None)
         .map_err(|e| EccError::DecodeFailed(format!("{:?}", e)))?;
-    let n_errs = result.errors_count();
+    let corrected_full: Vec<u8> = result.iter().copied().collect();
+    let n_errs = codeword
+        .iter()
+        .zip(corrected_full.iter())
+        .filter(|(a, b)| a != b)
+        .count();
     let msg: Vec<u8> = result.data().to_vec();
     Ok((msg, n_errs))
 }

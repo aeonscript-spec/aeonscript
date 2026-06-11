@@ -62,8 +62,9 @@ def test_density_under_2():
 
 def test_rejects_invalid_transition():
     """Decoding must reject sequences with adjacent identical bases."""
+    # 7 chars total = initial 'A' + 6-base body, all 'A' — pairwise identical
     with pytest.raises(ValueError, match="must differ"):
-        goldman_dna_to_bytes("AAAAAA")  # impossible under Goldman rules
+        goldman_dna_to_bytes("AAAAAAA")
 
 
 def test_rejects_invalid_initial_base():

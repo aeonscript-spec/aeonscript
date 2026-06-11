@@ -8,7 +8,7 @@
 //! 4. L1 — encode bytes as DNA with constraint-aware base permutations.
 //! 5. Chunk into oligos of the configured target length.
 
-use crate::error_correction::{encode_with_ecc, DEFAULT_BLOCK, DEFAULT_NSYM};
+use crate::error_correction::{encode_with_ecc, EccError, DEFAULT_BLOCK, DEFAULT_NSYM};
 use crate::physical::{bytes_to_dna, PhysicalError};
 use crate::scrambler::scramble;
 use crate::semantic::{make_tag, validate_tag_value, TagError};
@@ -22,6 +22,8 @@ pub const DEFAULT_OLIGO_LENGTH: usize = 200;
 pub enum EncodeError {
     #[error("L1 encoding failed: {0}")]
     Physical(#[from] PhysicalError),
+    #[error("L4 RS encoding failed: {0}")]
+    Ecc(#[from] EccError),
     #[error("L5 tag error: {0}")]
     Tag(#[from] TagError),
     #[error("Oligo length too small (minimum is 64 bases, got {0})")]
@@ -59,8 +61,8 @@ pub fn encode_bytes_full(
     let mut tagged = tag.into_bytes();
     tagged.extend_from_slice(data);
 
-    // L4: Reed-Solomon (v0.1 skeleton — passthrough)
-    let rs_encoded = encode_with_ecc(&tagged, DEFAULT_NSYM, DEFAULT_BLOCK);
+    // L4: Reed-Solomon RS(255, 223) over GF(256)
+    let rs_encoded = encode_with_ecc(&tagged, DEFAULT_NSYM, DEFAULT_BLOCK)?;
 
     // Scrambler: uniformise byte distribution
     let stream = scramble(&rs_encoded);
