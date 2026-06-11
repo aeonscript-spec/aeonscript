@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from importlib.resources import files
 from pathlib import Path
 from typing import Iterable
 
@@ -60,12 +59,17 @@ class BioSafetyViolation(Exception):
 
 def _load_hazard_db() -> list[dict]:
     """Load the hazard signature list shipped with the package."""
-    try:
-        data = (files("aeonscript") / "biosafety_hazards.json").read_text()
-    except (FileNotFoundError, ModuleNotFoundError):
-        # Fallback: relative path during development
-        here = Path(__file__).parent
-        data = (here / "biosafety_hazards.json").read_text()
+    here = Path(__file__).parent
+    json_path = here / "biosafety_hazards.json"
+    if json_path.exists():
+        data = json_path.read_text(encoding="utf-8")
+    else:
+        # Fallback: use importlib.resources (when installed as wheel)
+        from importlib.resources import files
+
+        data = (files("aeonscript") / "biosafety_hazards.json").read_text(
+            encoding="utf-8"
+        )
     return json.loads(data)["signatures"]
 
 
