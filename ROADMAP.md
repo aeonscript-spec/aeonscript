@@ -7,34 +7,52 @@
 ## Phase 0 — Fondations (terminée)
 
 - [x] Manifeste publié
-- [x] Spec v0.1 — couches L1, L4, L5 finalisées
-- [x] Implémentation Python de référence (L1+L4+L5)
-- [x] Smoke test Node.js (L1+L5, sans Reed-Solomon)
+- [x] Spec v0.1 — couches L1, L4, L5 finalisées (RFC-style, 12 sections)
+- [x] Implémentation Python de référence (L1+L4+L5 via reedsolo, CI verte, pytest 22 tests)
+- [x] Smoke test Node.js (L1+L5, vérifié en CI)
 - [x] Round-trip encode/decode démontré
+- [x] 10 test vectors canoniques L1+L5 + spec/CONFORMANCE.md
+- [x] Bio-safety screening stub (SPEC §9 API + JSON DB)
+- [x] CHANGELOG, CITATION, FUNDING, FAQ, GLOSSARY, tutorial, wire-format-by-example, comparison-vs-alternatives
+- [x] Recherche trademark documentée (USPTO/EUIPO/INPI)
+- [x] Landing aeonscript.org avec démo interactive in-browser
+- [x] Release GitHub v0.1.0 publiée
 
 ---
 
 ## Phase 1 — Maturation v0.2 (3-6 mois)
 
 ### Spec
-- [ ] Couche L2 — multiplexage de brins (forward/reverse simultanés)
+- [x] **L2 multiplexing — draft spec** (`spec/drafts/L2-multiplexing-draft.md`)
+- [ ] Couche L2 — multiplexage de brins (forward/reverse simultanés) — wire format finalisé
 - [ ] Couche L2 — multiplexage de cadres de lecture (frames +0, +1, +2)
 - [ ] Couche L3 — random access par amorces PCR
 - [ ] Couche L6 — compression et chiffrement standardisés
 - [ ] Format d'index pour la table de fichiers
-- [ ] Spec du protocole bio-safety (base de données de hazards)
+- [ ] Spec du protocole bio-safety (intégration IGSC réelle vs stub v0.1)
 
 ### Codec
-- [ ] Codec Goldman ternary (contraintes structurelles, élimine les runs)
+- [ ] Codec Goldman ternary (contraintes structurelles, élimine les runs) → L1 profile `L1-3-goldman`
 - [ ] Codec RLL-constrained (densité Shannon optimale)
 - [ ] LDPC outer code (récupération d'oligos perdus)
+- [ ] HEDGES integration pour indels (Press et al. 2020) → L4 profile `L4-hedges`
+- [ ] Evo 2 integration → L4 profile `L4-evo2` (AI-native)
 - [ ] Hash de méthylation cross-layer (L1-5m)
 
 ### Tooling
+- [x] **Rust reference skeleton** (`reference-rs/` — L1+L5+scrambler, L4 passthrough)
+- [ ] Finaliser L4 Rust via reed-solomon-erasure (v0.1.1)
 - [ ] CLI `aeonscript encode/decode/inspect`
 - [ ] Validateur de conformité spec
 - [ ] Visualisateur d'oligos
 - [ ] Benchmarks (densité, vitesse, robustesse aux erreurs)
+- [ ] WASM build du codec Rust (browser-native sans server)
+
+### Outreach (Phase 1)
+- [x] Drafts cold-email rédigés (`.launch-drafts/outreach-emails.md`) pour : Brewster Kahle, Karin Strauss, Yaniv Erlich, Hyunjun Park, Arc Institute, Nick Goldman
+- [ ] Lancement HN/Reddit/X (drafts prêts dans `.launch-drafts/announcements.md`)
+- [ ] Envoi des 6 cold-emails (cadencé à 1/semaine post-launch)
+- [ ] Recueil & intégration des premiers feedbacks dans spec v0.2
 
 ---
 
