@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeonScript — Comment ça marche, en 3D</title>
+<meta name="description" content="Démonstration visuelle 3D du fonctionnement d'AeonScript : comment on écrit des données dans l'ADN.">
+<meta property="og:title" content="AeonScript — visualisation 3D">
+<meta property="og:description" content="Comment AeonScript transforme un texte en séquence ADN — et l'archive pour des siècles.">
+<meta property="og:image" content="https://aeonscript.org/og-image.svg">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-card: #101013;
+    --border: #1d1d22;
+    --text: #e8e8ec;
+    --text-dim: #8a8a96;
+    --text-faint: #4a4a55;
+    --accent: #00d4a8;
+    --base-a: #e74c3c;
+    --base-c: #3498db;
+    --base-g: #2ecc71;
+    --base-t: #f39c12;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Inter", "Segoe UI", Roboto, sans-serif;
+    line-height: 1.55;
+  }
+  /* Top header */
+  header {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 14px 24px;
+    background: rgba(10, 10, 11, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    z-index: 100; display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+  .brand svg { width: 20px; height: 20px; }
+  .brand-mode { color: var(--accent); font-size: 11px; padding: 3px 9px; background: rgba(0,212,168,0.1); border: 1px solid rgba(0,212,168,0.3); border-radius: 100px; margin-left: 8px; font-family: "SF Mono", monospace; }
+  .top-links { display: flex; gap: 18px; font-size: 13px; }
+  .top-links a { color: var(--text-dim); text-decoration: none; }
+  .top-links a:hover { color: var(--text); }
+  @media (max-width: 600px) { .top-links { display: none; } }
+
+  /* Stage layout */
+  #stage { position: absolute; inset: 0; top: 53px; }
+  #scene-canvas { position: absolute; inset: 0; }
+
+  /* Narration panel */
+  #narration {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 460px;
+    background: linear-gradient(90deg, rgba(10,10,11,0) 0%, rgba(10,10,11,0.6) 25%, rgba(10,10,11,0.92) 100%);
+    padding: 60px 40px;
+    overflow-y: auto;
+    pointer-events: auto;
+  }
+  @media (max-width: 900px) {
+    #narration {
+      left: 0; width: 100%; top: auto; bottom: 0; height: 50%;
+      background: linear-gradient(180deg, rgba(10,10,11,0) 0%, rgba(10,10,11,0.92) 30%);
+      padding: 24px;
+    }
+  }
+
+  .step-badge {
+    display: inline-block; padding: 4px 12px;
+    background: rgba(0,212,168,0.1); border: 1px solid rgba(0,212,168,0.3);
+    border-radius: 100px; font-size: 11px; color: var(--accent);
+    font-family: "SF Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .step-title {
+    font-size: clamp(24px, 3vw, 32px);
+    letter-spacing: -0.02em; line-height: 1.1; font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .step-title em { color: var(--accent); font-style: normal; }
+  .step-body { color: var(--text-dim); font-size: 15px; line-height: 1.6; margin-bottom: 24px; }
+  .step-body strong { color: var(--text); font-weight: 600; }
+  .step-body code {
+    background: #050507; border: 1px solid var(--border); padding: 2px 6px;
+    border-radius: 3px; font-family: "SF Mono", monospace; font-size: 13px;
+    color: var(--accent);
+  }
+  .step-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+  .step-stat {
+    padding: 12px 14px; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .step-stat-num { font-size: 22px; font-weight: 600; color: var(--accent); }
+  .step-stat-lbl { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+  /* Step controls */
+  .controls {
+    display: flex; gap: 10px; margin-top: 24px; padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .btn {
+    padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; font-family: inherit; transition: all .15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: #001a14; font-weight: 600; }
+  .btn-primary:hover { background: #00f0c0; transform: translateY(-1px); }
+  .btn-secondary { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+  .btn-secondary:hover { color: var(--text); border-color: var(--text-dim); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Step indicator */
+  #step-indicator {
+    position: absolute; top: 70px; left: 24px;
+    display: flex; gap: 6px; z-index: 50;
+  }
+  #step-indicator .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); transition: all .3s;
+  }
+  #step-indicator .dot.done { background: var(--accent-dim); }
+  #step-indicator .dot.current { background: var(--accent); width: 24px; border-radius: 100px; }
+
+  /* Floating legend */
+  #legend {
+    position: absolute; bottom: 20px; left: 24px; z-index: 50;
+    background: rgba(10, 10, 11, 0.8); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px;
+    display: flex; gap: 14px; font-size: 11px; font-family: "SF Mono", monospace;
+    pointer-events: none;
+  }
+  #legend .leg { display: flex; align-items: center; gap: 4px; color: var(--text-dim); }
+  #legend .leg::before { content: ''; width: 10px; height: 10px; border-radius: 50%; }
+  #legend .leg-a::before { background: var(--base-a); }
+  #legend .leg-c::before { background: var(--base-c); }
+  #legend .leg-g::before { background: var(--base-g); }
+  #legend .leg-t::before { background: var(--base-t); }
+  @media (max-width: 900px) { #legend { bottom: auto; top: 70px; left: 60px; } }
+
+  /* Overlay text on top of helix (HTML labels) */
+  .floating-label {
+    position: absolute;
+    background: rgba(10, 10, 11, 0.9); border: 1px solid var(--accent);
+    color: var(--accent); padding: 4px 10px; border-radius: 4px;
+    font-family: "SF Mono", monospace; font-size: 11px;
+    pointer-events: none; white-space: nowrap;
+    transition: opacity .4s;
+  }
+
+  /* Code-display element */
+  .ascii-flow {
+    font-family: "SF Mono", monospace; font-size: 12px;
+    background: #050507; padding: 14px; border-radius: 6px;
+    border: 1px solid var(--border); margin: 12px 0;
+    line-height: 1.6; color: var(--text);
+    overflow-x: auto; white-space: pre;
+  }
+  .ascii-flow .a { color: var(--base-a); }
+  .ascii-flow .c { color: var(--base-c); }
+  .ascii-flow .g { color: var(--base-g); }
+  .ascii-flow .t { color: var(--base-t); }
+  .ascii-flow .dim { color: var(--text-faint); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 6 Q16 16 26 6 M6 16 Q16 26 26 16 M6 26 Q16 36 26 26" stroke="#00d4a8" fill="none" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    AeonScript<span class="brand-mode">EXPLAINER 3D</span>
+  </div>
+  <div class="top-links">
+    <a href="https://aeonscript.org">← retour au site</a>
+    <a href="https://github.com/aeonscript-spec/aeonscript">GitHub</a>
+  </div>
+</header>
+
+<div id="stage">
+  <canvas id="scene-canvas"></canvas>
+
+  <div id="step-indicator"></div>
+
+  <div id="legend">
+    <span class="leg leg-a">A</span>
+    <span class="leg leg-c">C</span>
+    <span class="leg leg-g">G</span>
+    <span class="leg leg-t">T</span>
+  </div>
+
+  <aside id="narration">
+    <div class="step-badge" id="step-badge">Étape 1 / 6</div>
+    <h1 class="step-title" id="step-title">Voici l'ADN.</h1>
+    <div class="step-body" id="step-body">
+      Une molécule en forme de double hélice. Chaque "barreau" est l'une de quatre bases — A, C, G ou T. C'est l'alphabet du vivant, et c'est aussi le support de mémoire le plus dense que la nature ait inventé.
+    </div>
+    <div class="step-body" id="step-extra"></div>
+    <div class="controls">
+      <button class="btn btn-secondary" id="btn-prev" disabled>← Précédent</button>
+      <button class="btn btn-primary" id="btn-next">Continuer →</button>
+    </div>
+  </aside>
+</div>
+
+<!-- Three.js -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+// ===== SCENE SETUP =====
+const canvas = document.getElementById('scene-canvas');
+const scene = new THREE.Scene();
+scene.background = null;
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, 0, 22);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight - 53);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+canvas.style.top = '53px';
+canvas.style.height = 'calc(100% - 53px)';
+
+// Lights
+const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambient);
+const key = new THREE.DirectionalLight(0xffffff, 0.8);
+key.position.set(8, 6, 8);
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x00d4a8, 0.4);
+fill.position.set(-8, -4, 4);
+scene.add(fill);
+
+// ===== DNA HELIX =====
+const baseColors = {
+  A: 0xe74c3c, C: 0x3498db, G: 0x2ecc71, T: 0xf39c12,
+};
+const baseEmissives = {
+  A: 0x8b1a0e, C: 0x10527a, G: 0x18763a, T: 0x8a5708,
+};
+
+const helixGroup = new THREE.Group();
+scene.add(helixGroup);
+
+const HELIX_TURNS = 6;
+const HELIX_BASES_PER_TURN = 10;
+const HELIX_RADIUS = 2.6;
+const HELIX_HEIGHT_PER_BASE = 0.7;
+const TOTAL_BASES = HELIX_TURNS * HELIX_BASES_PER_TURN;
+const totalHeight = HELIX_HEIGHT_PER_BASE * TOTAL_BASES;
+
+// Generate a deterministic random sequence (always the same on reload)
+function lcg(seed) { let s = seed; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 0xFFFFFFFF; }
+const rand = lcg(42);
+const sequence = [];
+for (let i = 0; i < TOTAL_BASES; i++) {
+  sequence.push('ACGT'[Math.floor(rand() * 4)]);
+}
+
+// Build helix
+const baseMeshes = [];
+const backboneGeometry = new THREE.SphereGeometry(0.13, 12, 12);
+const baseGeometry = new THREE.SphereGeometry(0.35, 14, 14);
+const barGeometry = new THREE.CylinderGeometry(0.06, 0.06, HELIX_RADIUS * 2, 8);
+
+const backboneMat = new THREE.MeshStandardMaterial({ color: 0x8a8a96, metalness: 0.2, roughness: 0.7 });
+
+for (let i = 0; i < TOTAL_BASES; i++) {
+  const t = i / TOTAL_BASES;
+  const angle = (i / HELIX_BASES_PER_TURN) * Math.PI * 2;
+  const y = (i - TOTAL_BASES / 2) * HELIX_HEIGHT_PER_BASE;
+
+  // Strand 1 backbone
+  const bb1 = new THREE.Mesh(backboneGeometry, backboneMat);
+  bb1.position.set(Math.cos(angle) * HELIX_RADIUS, y, Math.sin(angle) * HELIX_RADIUS);
+  helixGroup.add(bb1);
+
+  // Strand 2 backbone (mirror)
+  const bb2 = new THREE.Mesh(backboneGeometry, backboneMat);
+  bb2.position.set(-Math.cos(angle) * HELIX_RADIUS, y, -Math.sin(angle) * HELIX_RADIUS);
+  helixGroup.add(bb2);
+
+  // Base sphere (between strands, slightly offset toward strand 1)
+  const base = sequence[i];
+  const baseMat = new THREE.MeshStandardMaterial({
+    color: baseColors[base],
+    emissive: baseEmissives[base],
+    emissiveIntensity: 0.3,
+    metalness: 0.1, roughness: 0.5,
+  });
+  const baseMesh = new THREE.Mesh(baseGeometry, baseMat);
+  const baseOffset = 0.45;
+  baseMesh.position.set(
+    Math.cos(angle) * HELIX_RADIUS * baseOffset,
+    y,
+    Math.sin(angle) * HELIX_RADIUS * baseOffset
+  );
+  baseMesh.userData = { base, index: i };
+  helixGroup.add(baseMesh);
+  baseMeshes.push(baseMesh);
+
+  // Pairing bar
+  const bar = new THREE.Mesh(barGeometry, new THREE.MeshStandardMaterial({
+    color: baseColors[base], emissive: baseEmissives[base], emissiveIntensity: 0.15,
+    metalness: 0.1, roughness: 0.6, transparent: true, opacity: 0.55
+  }));
+  bar.position.set(0, y, 0);
+  bar.rotation.z = Math.PI / 2;
+  bar.rotation.y = -angle;
+  helixGroup.add(bar);
+}
+
+// ===== STORAGE VIAL (initially hidden) =====
+const vialGroup = new THREE.Group();
+vialGroup.visible = false;
+scene.add(vialGroup);
+
+const vialGlass = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.2, 1.2, 5, 24, 1, true),
+  new THREE.MeshPhysicalMaterial({
+    color: 0xaaccdd, transparent: true, opacity: 0.18,
+    transmission: 0.85, roughness: 0.05, metalness: 0,
+    clearcoat: 1, side: THREE.DoubleSide,
+  })
+);
+vialGroup.add(vialGlass);
+
+const vialBottom = new THREE.Mesh(
+  new THREE.CircleGeometry(1.2, 24),
+  new THREE.MeshPhysicalMaterial({ color: 0x88aacc, transparent: true, opacity: 0.4 })
+);
+vialBottom.rotation.x = -Math.PI / 2;
+vialBottom.position.y = -2.5;
+vialGroup.add(vialBottom);
+
+const vialCap = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.25, 1.25, 0.4, 24),
+  new THREE.MeshStandardMaterial({ color: 0x00d4a8, metalness: 0.6, roughness: 0.3 })
+);
+vialCap.position.y = 2.7;
+vialGroup.add(vialCap);
+
+// ADN powder inside (small spheres)
+const powderGroup = new THREE.Group();
+const powderMat = new THREE.MeshStandardMaterial({
+  color: 0xe8e8ec, emissive: 0x00d4a8, emissiveIntensity: 0.2,
+});
+for (let i = 0; i < 80; i++) {
+  const p = new THREE.Mesh(new THREE.SphereGeometry(0.07 + Math.random() * 0.04, 6, 6), powderMat);
+  p.position.set(
+    (Math.random() - 0.5) * 2,
+    -2.3 + Math.random() * 1.2,
+    (Math.random() - 0.5) * 2
+  );
+  powderGroup.add(p);
+}
+vialGroup.add(powderGroup);
+
+// ===== STEPS =====
+const steps = [
+  {
+    badge: 'Étape 1 / 6',
+    title: 'Voici l\'<em>ADN</em>.',
+    body: `Une molécule en forme de double hélice. Chaque "barreau" est l'une de quatre bases — <strong>A, C, G ou T</strong>. C'est l'alphabet du vivant.`,
+    extra: `
+      <div class="step-stats">
+        <div class="step-stat"><div class="step-stat-num">4</div><div class="step-stat-lbl">lettres dans l'alphabet ADN</div></div>
+        <div class="step-stat"><div class="step-stat-num">200M</div><div class="step-stat-lbl">DVD par gramme d'ADN</div></div>
+      </div>
+      <p style="margin-top:12px;color:var(--text-dim);font-size:14px;">L'ADN bien conservé peut rester lisible <strong>plusieurs milliers d'années</strong>. Aucun support numérique ne s'en approche.</p>
+    `,
+    setup: () => {
+      helixGroup.visible = true; vialGroup.visible = false;
+      autoRotate = true; targetCameraPos.set(0, 0, 22);
+      targetHelixScale = 1;
+    }
+  },
+  {
+    badge: 'Étape 2 / 6',
+    title: 'Encoder du <em>texte</em> en ADN.',
+    body: `On part d'un message — par exemple <code>"hello"</code>. On le transforme en bits, et on associe chaque paire de bits à une lettre ADN. Deux bits par lettre, c'est aussi simple que ça.`,
+    extra: `
+      <div class="ascii-flow"><span class="dim">texte    :</span> hello
+<span class="dim">bits     :</span> 01101000 01100101 01101100 01101100 01101111
+<span class="dim">paires   :</span> 01 10 10 00 ...
+<span class="dim">ADN      :</span> <span class="c">C</span><span class="g">G</span><span class="g">G</span><span class="a">A</span> ...</div>
+      <p style="margin-top:12px;color:var(--text-dim);font-size:14px;">La règle : <code>00=A</code>, <code>01=C</code>, <code>10=G</code>, <code>11=T</code>. Une convention parmi d'autres, mais celle qu'AeonScript utilise par défaut.</p>
+    `,
+    setup: () => {
+      helixGroup.visible = true; vialGroup.visible = false;
+      autoRotate = true; targetCameraPos.set(2, 4, 14); targetHelixScale = 1.1;
+    }
+  },
+  {
+    badge: 'Étape 3 / 6',
+    title: 'Le secret : <em>l\'étiquette</em>.',
+    body: `Avant les données, AeonScript inscrit dans les premiers nucléotides une <strong>carte d'identité</strong> du fichier — son format, sa taille, sa version. Un décodeur en 2230 saura quoi en faire, sans aucune documentation externe.`,
+    extra: `
+      <div class="ascii-flow"><span class="c">|</span>AEONSCRIPT=0.1<span class="dim">;</span>L1=L1-4<span class="dim">;</span>L4=rs255-223<span class="dim">;</span>TYPE=text/plain<span class="dim">;</span>LEN=4096<span class="dim">;</span>ID=XYZ<span class="c">|</span></div>
+      <p style="margin-top:12px;color:var(--text-dim);font-size:14px;">Cette étiquette est gravée dans l'ADN lui-même, au début de chaque bloc. <strong>Le fichier porte sa propre notice d'utilisation.</strong></p>
+    `,
+    setup: () => {
+      helixGroup.visible = true; vialGroup.visible = false;
+      autoRotate = false; targetCameraPos.set(0, totalHeight * 0.35, 12); targetHelixScale = 1.2;
+      highlightTagRegion = true;
+    }
+  },
+  {
+    badge: 'Étape 4 / 6',
+    title: 'Réparer les <em>erreurs</em>.',
+    body: `La lecture d'ADN n'est jamais parfaite. AeonScript ajoute automatiquement des "octets de parité" — un peu comme la grille d'erreur d'un QR code — qui permettent de récupérer les données même si quelques bases sont mal lues.`,
+    extra: `
+      <div class="ascii-flow"><span class="dim">données :</span> [223 octets utiles]
+<span class="dim">parité  :</span> [<span class="g">32 octets de réparation</span>]
+<span class="dim">corrige :</span> jusqu'à <strong style="color:var(--accent)">16 erreurs</strong> par bloc</div>
+      <p style="margin-top:12px;color:var(--text-dim);font-size:14px;">Reed-Solomon — la même technique utilisée sur les CD, les QR codes, et les missions spatiales Voyager. Éprouvée depuis 60 ans.</p>
+    `,
+    setup: () => {
+      helixGroup.visible = true; vialGroup.visible = false;
+      autoRotate = true; targetCameraPos.set(0, 0, 18); targetHelixScale = 0.95;
+      highlightTagRegion = false;
+    }
+  },
+  {
+    badge: 'Étape 5 / 6',
+    title: 'Stocker pour des <em>siècles</em>.',
+    body: `Une fois écrite, la séquence ADN est lyophilisée — réduite en poudre sèche dans un petit flacon. Aucune électricité. Aucune climatisation. Juste un endroit sec. <strong>Le temps passe.</strong>`,
+    extra: `
+      <div class="step-stats">
+        <div class="step-stat"><div class="step-stat-num">0 W</div><div class="step-stat-lbl">énergie en stockage</div></div>
+        <div class="step-stat"><div class="step-stat-num">~500 ans</div><div class="step-stat-lbl">à température ambiante</div></div>
+        <div class="step-stat"><div class="step-stat-num">millénaires</div><div class="step-stat-lbl">dans la silice ou au froid</div></div>
+        <div class="step-stat"><div class="step-stat-num">1 EB/cm³</div><div class="step-stat-lbl">densité démontrée (Microsoft 2020)</div></div>
+      </div>
+    `,
+    setup: () => {
+      helixGroup.visible = false; vialGroup.visible = true;
+      autoRotate = false; targetCameraPos.set(0, 1, 14);
+      vialGroup.rotation.y = 0;
+    }
+  },
+  {
+    badge: 'Étape 6 / 6',
+    title: 'Lire à <em>n\'importe quel moment</em>.',
+    body: `Dans 1 an, dans 100, dans 1000. On verse une goutte d'eau dans le flacon, on séquence avec n'importe quel séquenceur du futur, on lit l'étiquette — et le décodeur sait exactement quoi faire.`,
+    extra: `
+      <p style="color:var(--text);font-size:15px;margin-bottom:12px;">C'est ça, AeonScript :</p>
+      <ul style="color:var(--text-dim);padding-left:18px;font-size:14px;line-height:1.7;">
+        <li>Un <strong>format ouvert</strong>, vérifiable par tous</li>
+        <li>Une <strong>licence libre</strong> (MIT + CC-BY-SA)</li>
+        <li>Un <strong>code de référence</strong> en Python, Rust, Node</li>
+        <li>Un <strong>support biologique</strong> qui survit à n'importe quelle entreprise</li>
+      </ul>
+      <p style="margin-top:14px;color:var(--accent);font-size:14px;font-weight:600;">La mémoire de l'humanité ne devrait pas être propriétaire.</p>
+      <div style="margin-top:20px;">
+        <a href="https://aeonscript.org" class="btn btn-primary" style="text-decoration:none;display:inline-block;">Retour à aeonscript.org →</a>
+      </div>
+    `,
+    setup: () => {
+      helixGroup.visible = true; vialGroup.visible = false;
+      autoRotate = true; targetCameraPos.set(0, 0, 22); targetHelixScale = 1;
+      highlightTagRegion = false;
+    }
+  }
+];
+
+let currentStep = 0;
+let autoRotate = true;
+let targetCameraPos = new THREE.Vector3(0, 0, 22);
+let targetHelixScale = 1;
+let highlightTagRegion = false;
+
+function renderStep(n) {
+  const step = steps[n];
+  document.getElementById('step-badge').textContent = step.badge;
+  document.getElementById('step-title').innerHTML = step.title;
+  document.getElementById('step-body').innerHTML = step.body;
+  document.getElementById('step-extra').innerHTML = step.extra || '';
+  document.getElementById('btn-prev').disabled = n === 0;
+  document.getElementById('btn-next').disabled = n === steps.length - 1;
+  document.getElementById('btn-next').textContent = n === steps.length - 1 ? '✓ Terminé' : 'Continuer →';
+  if (step.setup) step.setup();
+  updateIndicator();
+}
+
+function updateIndicator() {
+  const ind = document.getElementById('step-indicator');
+  ind.innerHTML = steps.map((_, i) => {
+    let cls = 'dot';
+    if (i < currentStep) cls += ' done';
+    if (i === currentStep) cls += ' current';
+    return `<span class="${cls}"></span>`;
+  }).join('');
+}
+
+document.getElementById('btn-prev').addEventListener('click', () => {
+  if (currentStep > 0) { currentStep--; renderStep(currentStep); }
+});
+document.getElementById('btn-next').addEventListener('click', () => {
+  if (currentStep < steps.length - 1) { currentStep++; renderStep(currentStep); }
+});
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') document.getElementById('btn-next').click();
+  if (e.key === 'ArrowLeft') document.getElementById('btn-prev').click();
+});
+
+// ===== ANIMATION LOOP =====
+let time = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  time += 0.005;
+
+  // Camera smoothing
+  camera.position.lerp(targetCameraPos, 0.04);
+  camera.lookAt(0, 0, 0);
+
+  // Helix scale smoothing
+  helixGroup.scale.lerp(new THREE.Vector3(targetHelixScale, targetHelixScale, targetHelixScale), 0.06);
+
+  if (autoRotate) {
+    helixGroup.rotation.y += 0.004;
+  }
+
+  // Tag region highlight (first ~12 bases pulse)
+  if (highlightTagRegion) {
+    const pulse = 0.5 + 0.5 * Math.sin(time * 6);
+    baseMeshes.forEach((m, i) => {
+      const inTag = i >= TOTAL_BASES - 12; // top of helix
+      m.material.emissiveIntensity = inTag ? 0.4 + pulse * 0.6 : 0.15;
+      m.scale.setScalar(inTag ? 1 + pulse * 0.2 : 1);
+    });
+  } else {
+    baseMeshes.forEach(m => {
+      m.material.emissiveIntensity = 0.3;
+      m.scale.setScalar(1);
+    });
+  }
+
+  // Vial rotation
+  if (vialGroup.visible) {
+    vialGroup.rotation.y += 0.005;
+  }
+
+  renderer.render(scene, camera);
+}
+
+// Resize
+function onResize() {
+  camera.aspect = window.innerWidth / (window.innerHeight - 53);
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight - 53);
+}
+window.addEventListener('resize', onResize);
+
+// Start
+renderStep(0);
+animate();
+</script>
+
+</body>
+</html>
