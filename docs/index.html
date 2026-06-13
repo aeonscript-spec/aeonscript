@@ -233,6 +233,11 @@
   .demo-output::-webkit-scrollbar-thumb:hover { background: var(--accent); }
   .demo-output::-webkit-scrollbar-corner { background: transparent; }
   .demo-stats { font-size: 12px; color: var(--text-faint); font-family: "SF Mono", monospace; }
+  .demo-note { font-size: 12.5px; line-height: 1.5; margin-top: 4px; padding: 10px 12px; border-radius: 6px; display: none; }
+  .demo-note.show { display: block; }
+  .demo-note.warn { background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.3); color: #d99a3a; }
+  .demo-note.good { background: rgba(0,212,168,0.08); border: 1px solid rgba(0,212,168,0.3); color: var(--accent); }
+  .demo-note strong { color: inherit; }
   .demo-actions { display: flex; align-items: center; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
   .demo-result { font-size: 14px; font-family: "SF Mono", monospace; color: var(--text-dim); }
   .demo-details { margin-top: 32px; }
@@ -366,6 +371,7 @@
         <div class="demo-label">2. DNA oligos (output)</div>
         <pre id="demo-output" class="demo-output mono">Click "Encode" to see the oligos.</pre>
         <div class="demo-stats" id="demo-output-stats">— oligos · — bases · — bits/base</div>
+        <div class="demo-note" id="demo-density-note"></div>
       </div>
     </div>
 
@@ -528,6 +534,19 @@
       $("demo-output-stats").textContent = `${oligos.length} oligos · ${totalBases} bases · ${density.toFixed(3)} bits/base`;
       $("demo-result").textContent = "✓ encoded";
       $("demo-result").style.color = "var(--accent)";
+
+      // --- Adaptive density note: explain the tag-overhead effect ---
+      const note = $("demo-density-note");
+      const tagBytes = new TextEncoder().encode(tag).length;
+      const payloadPct = bytes.length === 0 ? 0 : Math.round(bytes.length / (tagBytes + bytes.length) * 100);
+      note.className = "demo-note show";
+      if (bytes.length < 200) {
+        note.classList.add("warn");
+        note.innerHTML = `⚠️ <strong>Low density is expected here.</strong> Only <strong>${payloadPct}%</strong> of these bases are your text — the rest is the fixed ${tagBytes}-byte self-describing tag. That tag is the same size whether you encode 7 bytes or 7 MB. Try pasting <strong>500+ characters</strong> to watch the density climb toward the real ~1.75 bits/base.`;
+      } else {
+        note.classList.add("good");
+        note.innerHTML = `✓ <strong>${payloadPct}% payload.</strong> At this size the fixed ${tagBytes}-byte tag is becoming negligible. On a real file (≥10 KB) density approaches <strong>~1.75 bits/base</strong> — about 88% of the Shannon limit for the 4-letter DNA channel.`;
+      }
     } catch (e) {
       $("demo-output").textContent = `Error: ${e.message}`;
       $("demo-result").textContent = "✗ failed";
@@ -559,6 +578,8 @@
     $("demo-output").textContent = "Click \"Encode\" to see the oligos.";
     $("demo-output-stats").textContent = "— oligos · — bases · — bits/base";
     $("demo-result").textContent = "";
+    $("demo-density-note").className = "demo-note";
+    $("demo-density-note").innerHTML = "";
     lastOligos = null;
     updateInputStats();
   }
