@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeonScript — Anatomie de l'étiquette</title>
+<meta name="description" content="Décortiquez champ par champ l'étiquette auto-descriptive qui rend chaque fichier AeonScript lisible pour les siècles à venir.">
+<meta property="og:title" content="AeonScript — Anatomie de l'étiquette">
+<meta property="og:description" content="Le mode d'emploi gravé dans l'ADN : décomposez chaque champ de l'étiquette AeonScript.">
+<meta property="og:image" content="https://aeonscript.org/og-image.svg">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-card: #101013;
+    --bg-elev: #15151a;
+    --border: #1d1d22;
+    --text: #e8e8ec;
+    --text-dim: #8a8a96;
+    --text-faint: #4a4a55;
+    --accent: #00d4a8;
+    /* Field colors */
+    --c-delim: #6e7280;
+    --c-version: #00d4a8;
+    --c-l1: #4db8ff;
+    --c-l4: #2ecc71;
+    --c-type: #ffb84d;
+    --c-len: #b07cff;
+    --c-id: #ff6b9d;
+    --c-checksum: #2dd4bf;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Inter", "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6; -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .container { max-width: 980px; margin: 0 auto; padding: 24px; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    background: rgba(10,10,11,0.9);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+  .brand svg { width: 20px; height: 20px; }
+  .brand-mode { color: var(--accent); font-size: 11px; padding: 3px 9px; background: rgba(0,212,168,0.1); border: 1px solid rgba(0,212,168,0.3); border-radius: 100px; margin-left: 6px; font-family: "SF Mono", monospace; }
+  .top-links { display: flex; gap: 18px; font-size: 13px; }
+  .top-links a { color: var(--text-dim); text-decoration: none; }
+  .top-links a:hover { color: var(--text); }
+  @media (max-width: 600px) { .top-links { display: none; } }
+
+  .hero { padding: 50px 0 20px; }
+  .section-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--accent); margin-bottom: 12px; font-family: "SF Mono", monospace; }
+  h1 { font-size: clamp(28px, 5vw, 42px); letter-spacing: -0.03em; line-height: 1.1; font-weight: 600; margin-bottom: 14px; }
+  h1 em { color: var(--accent); font-style: normal; }
+  .lede { font-size: 17px; color: var(--text-dim); max-width: 680px; line-height: 1.55; }
+
+  /* The interactive tag */
+  .tag-stage {
+    margin: 36px 0 24px;
+    padding: 32px 24px;
+    background: #050507;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow-x: auto;
+  }
+  .tag-line {
+    font-family: "SF Mono", "JetBrains Mono", monospace;
+    font-size: clamp(13px, 2.4vw, 19px);
+    line-height: 2.4;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .tok {
+    cursor: pointer;
+    padding: 4px 2px;
+    border-radius: 4px;
+    transition: all .15s;
+    border-bottom: 2px solid transparent;
+  }
+  .tok:hover, .tok.active {
+    background: rgba(255,255,255,0.06);
+    border-bottom-color: currentColor;
+  }
+  .tok.delim { color: var(--c-delim); cursor: default; }
+  .tok.version { color: var(--c-version); }
+  .tok.l1 { color: var(--c-l1); }
+  .tok.l4 { color: var(--c-l4); }
+  .tok.type { color: var(--c-type); }
+  .tok.len { color: var(--c-len); }
+  .tok.id { color: var(--c-id); }
+  .tok.checksum { color: var(--c-checksum); }
+  .tok.sep { color: var(--text-faint); cursor: default; }
+
+  .hint { text-align: center; color: var(--text-faint); font-size: 13px; margin-top: -10px; margin-bottom: 30px; }
+
+  /* Explanation panel */
+  .explain {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 22px 26px;
+    min-height: 150px;
+    transition: border-left-color .2s;
+  }
+  .explain-key {
+    font-family: "SF Mono", monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .explain-title { font-size: 22px; font-weight: 600; margin-bottom: 10px; letter-spacing: -0.01em; }
+  .explain-body { color: var(--text-dim); font-size: 15px; line-height: 1.6; margin-bottom: 14px; }
+  .explain-body strong { color: var(--text); }
+  .explain-meta { display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; font-family: "SF Mono", monospace; color: var(--text-faint); padding-top: 14px; border-top: 1px solid var(--border); }
+  .explain-meta b { color: var(--accent); font-weight: 600; }
+
+  /* Field navigator chips */
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 24px 0; }
+  .chip {
+    padding: 7px 13px; border-radius: 100px; font-size: 12.5px;
+    font-family: "SF Mono", monospace; cursor: pointer;
+    border: 1px solid var(--border); background: var(--bg-elev);
+    color: var(--text-dim); transition: all .15s;
+  }
+  .chip:hover { color: var(--text); border-color: var(--text-dim); }
+  .chip.active { background: var(--accent); color: #001a14; border-color: var(--accent); font-weight: 600; }
+
+  section { padding: 40px 0; border-top: 1px solid var(--border); }
+  h2 { font-size: 26px; letter-spacing: -0.02em; margin-bottom: 16px; font-weight: 600; }
+  p.body { color: var(--text-dim); font-size: 15px; max-width: 720px; margin-bottom: 16px; }
+  p.body strong { color: var(--text); }
+
+  /* Grammar rules */
+  .rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 20px; }
+  @media (max-width: 680px) { .rules { grid-template-columns: 1fr; } }
+  .rule { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .rule-char { font-family: "SF Mono", monospace; font-size: 28px; color: var(--accent); margin-bottom: 8px; }
+  .rule-desc { font-size: 14px; color: var(--text-dim); }
+
+  /* Byte breakdown */
+  .bytes-bar { display: flex; height: 44px; border-radius: 8px; overflow: hidden; margin: 20px 0 10px; border: 1px solid var(--border); }
+  .bytes-seg { display: flex; align-items: center; justify-content: center; font-family: "SF Mono", monospace; font-size: 11px; color: #001a14; font-weight: 600; transition: opacity .15s; }
+  .bytes-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; font-family: "SF Mono", monospace; color: var(--text-dim); }
+  .bytes-legend .lg { display: flex; align-items: center; gap: 6px; }
+  .bytes-legend .sw { width: 11px; height: 11px; border-radius: 3px; }
+
+  .callout {
+    background: linear-gradient(135deg, rgba(0,212,168,0.08), rgba(0,138,111,0.03));
+    border: 1px solid rgba(0,212,168,0.25); border-radius: 12px;
+    padding: 24px 28px; margin: 24px 0;
+  }
+  .callout-label { font-family: "SF Mono", monospace; font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .callout p { color: var(--text); font-size: 15px; line-height: 1.6; font-style: italic; }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; vertical-align: top; }
+  th { color: var(--text-dim); font-weight: 600; border-bottom: 2px solid var(--border); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+  tr + tr td { border-top: 1px solid var(--border); }
+  td:first-child { font-family: "SF Mono", monospace; color: var(--accent); white-space: nowrap; }
+
+  .btn { padding: 11px 22px; border-radius: 8px; font-size: 14px; font-weight: 500; text-decoration: none; transition: all .15s; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-primary { background: var(--accent); color: #001a14; font-weight: 600; }
+  .btn-primary:hover { background: #00f0c0; }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--text-dim); }
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+
+  footer { padding: 40px 0; border-top: 1px solid var(--border); color: var(--text-faint); font-size: 13px; text-align: center; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 6 Q16 16 26 6 M6 16 Q16 26 26 16 M6 26 Q16 36 26 26" stroke="#00d4a8" fill="none" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    AeonScript<span class="brand-mode">ANATOMIE</span>
+  </div>
+  <div class="top-links">
+    <a href="index.html">← site</a>
+    <a href="explainer-3d.html">3D explainer</a>
+    <a href="https://github.com/aeonscript-spec/aeonscript">GitHub</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="hero">
+    <div class="section-label">Anatomie de l'étiquette</div>
+    <h1>Le <em>mode d'emploi</em><br>gravé dans l'ADN.</h1>
+    <p class="lede">
+      Chaque bloc AeonScript commence par une étiquette auto-descriptive. C'est ce qui permet à un décodeur, dans 200 ans, de lire le fichier sans aucune documentation externe. Survolez ou touchez chaque champ pour le décortiquer.
+    </p>
+  </div>
+
+  <!-- Interactive tag -->
+  <div class="tag-stage">
+    <div class="tag-line" id="tag-line">
+      <span class="tok delim" data-k="delim">|</span><span class="tok version" data-k="version">AEONSCRIPT=0.1</span><span class="tok sep">;</span><span class="tok l1" data-k="l1">L1=L1-4</span><span class="tok sep">;</span><span class="tok l4" data-k="l4">L4=rs255-223</span><span class="tok sep">;</span><span class="tok type" data-k="type">TYPE=text/plain</span><span class="tok sep">;</span><span class="tok len" data-k="len">LEN=4096</span><span class="tok sep">;</span><span class="tok id" data-k="id">ID=demo-block-1</span><span class="tok sep">;</span><span class="tok checksum" data-k="checksum">CHECKSUM=sha256:e3b0c4…</span><span class="tok delim" data-k="delim">|</span>
+    </div>
+  </div>
+  <p class="hint">↑ Cliquez sur n'importe quel champ coloré</p>
+
+  <div class="chips" id="chips"></div>
+
+  <!-- Explanation panel -->
+  <div class="explain" id="explain">
+    <div class="explain-key" id="ex-key">AEONSCRIPT</div>
+    <div class="explain-title" id="ex-title">Version de la spécification</div>
+    <div class="explain-body" id="ex-body">Indique quelle version de la grammaire AeonScript a servi à écrire ce bloc. Un décodeur futur saura quelle logique appliquer — ou refuser proprement un format qu'il ne connaît pas.</div>
+    <div class="explain-meta" id="ex-meta"></div>
+  </div>
+
+  <!-- Grammar -->
+  <section>
+    <h2>La grammaire, en 3 règles</h2>
+    <p class="body">Volontairement minimaliste — pour rester lisible pour toujours, même par une machine qu'on n'a pas encore inventée. N'importe qui peut écrire un lecteur d'étiquette en cinq lignes de code, dans n'importe quel langage.</p>
+    <div class="rules">
+      <div class="rule"><div class="rule-char">|</div><div class="rule-desc"><strong style="color:var(--text)">Encadre</strong> l'étiquette — marque son début et sa fin.</div></div>
+      <div class="rule"><div class="rule-char">;</div><div class="rule-desc"><strong style="color:var(--text)">Sépare</strong> les champs entre eux.</div></div>
+      <div class="rule"><div class="rule-char">=</div><div class="rule-desc"><strong style="color:var(--text)">Relie</strong> chaque clé à sa valeur.</div></div>
+    </div>
+    <p class="body" style="margin-top:20px;"><strong>Conséquence :</strong> les caractères <code style="color:var(--accent);font-family:'SF Mono',monospace">; = |</code> sont interdits dans les valeurs — sinon la grammaire se casserait. C'est pourquoi un type MIME comme <code style="font-family:'SF Mono',monospace;color:var(--text-dim)">text/plain; charset=utf-8</code> est refusé : le point-virgule briserait la lecture.</p>
+  </section>
+
+  <!-- Byte breakdown -->
+  <section>
+    <h2>Combien ça pèse&nbsp;?</h2>
+    <p class="body">Sur l'exemple "Bonjour" (7 octets de contenu), l'étiquette pesait <strong>70 octets</strong>. Et cette étiquette est <strong>de taille fixe</strong> : identique que vous encodiez 7 octets ou 7 mégaoctets. Voilà pourquoi la densité est faible sur les petits messages et excellente sur les gros fichiers.</p>
+    <div class="bytes-bar" id="bytes-bar"></div>
+    <div class="bytes-legend">
+      <div class="lg"><span class="sw" style="background:var(--accent)"></span> étiquette : 70 octets (90%)</div>
+      <div class="lg"><span class="sw" style="background:var(--c-id)"></span> "Bonjour" : 7 octets (9%)</div>
+      <div class="lg"><span class="sw" style="background:var(--text-faint)"></span> préfixes : 1%</div>
+    </div>
+  </section>
+
+  <!-- Why it matters -->
+  <section>
+    <h2>Pourquoi c'est LA vraie innovation</h2>
+    <p class="body">Tous les autres systèmes de stockage ADN produisent une séquence <strong>muette</strong> : pour la décoder, il faut connaître à l'avance les paramètres, conservés dans un document séparé. Si ce document est perdu, l'ADN devient illisible — même si les molécules sont parfaitement intactes.</p>
+    <p class="body">AeonScript met le mode d'emploi <strong>dans la molécule elle-même</strong>.</p>
+    <div class="callout">
+      <div class="callout-label">L'analogie</div>
+      <p>Un colis sans étiquette : vous devez deviner le contenu et l'expéditeur. Un colis avec une étiquette complète : tout est écrit dessus. AeonScript, c'est le second.</p>
+    </div>
+  </section>
+
+  <!-- Optional fields -->
+  <section>
+    <h2>Champs optionnels</h2>
+    <p class="body">Au-delà des six champs obligatoires, l'étiquette peut en accueillir d'autres. Elle grandit, mais reste lisible — comme les en-têtes d'un email.</p>
+    <table>
+      <tr><th>Champ</th><th>Exemple</th><th>Usage</th></tr>
+      <tr><td>CHECKSUM</td><td>sha256:e3b0c4…</td><td>Vérification d'intégrité</td></tr>
+      <tr><td>AUTHORS</td><td>BnF</td><td>Provenance — qui a archivé</td></tr>
+      <tr><td>LICENSE</td><td>CC-BY-4.0</td><td>Droits sur le contenu</td></tr>
+      <tr><td>TIER</td><td>cold</td><td>Niveau de stockage (chaud / froid / archive)</td></tr>
+      <tr><td>ENCRYPT</td><td>aes256-gcm</td><td>Schéma de chiffrement (couche L6)</td></tr>
+      <tr><td>COMPRESS</td><td>zstd</td><td>Schéma de compression (couche L6)</td></tr>
+    </table>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="index.html#try-it-live">Encoder votre texte →</a>
+      <a class="btn btn-secondary" href="explainer-3d.html">Voir le fonctionnement en 3D</a>
+      <a class="btn btn-secondary" href="https://github.com/aeonscript-spec/aeonscript/blob/main/spec/SPEC-v0.1.md#4-layer-5--session--semantic-tags">Spec §4 (L5)</a>
+    </div>
+  </section>
+
+  <footer>
+    AeonScript — <a href="https://aeonscript.org">aeonscript.org</a> · CC-BY-SA 4.0<br>
+    « La mémoire de l'humanité ne devrait pas être propriétaire. »
+  </footer>
+
+</div>
+
+<script>
+  const FIELDS = {
+    delim: {
+      color: "var(--c-delim)",
+      key: "| (barre verticale)",
+      title: "Délimiteur",
+      body: "Encadre l'étiquette au début et à la fin. Permet au décodeur de <strong>repérer exactement où l'étiquette commence et finit</strong>, sans aucune ambiguïté, avant même de lire le contenu.",
+      meta: [["Obligatoire", "oui"], ["Coût", "2 octets"]]
+    },
+    version: {
+      color: "var(--c-version)",
+      key: "AEONSCRIPT",
+      title: "Version de la spécification",
+      body: "Indique quelle version de la grammaire AeonScript a servi à écrire ce bloc. Un décodeur de 2230 saura <strong>quelle logique appliquer</strong> — ou refuser proprement un format qu'il ne connaît pas, en sachant pourquoi.",
+      meta: [["Obligatoire", "oui"], ["Exemple", "0.1"], ["Coût", "~14 octets"]]
+    },
+    l1: {
+      color: "var(--c-l1)",
+      key: "L1",
+      title: "Profil de la couche physique",
+      body: "Dit <strong>quel alphabet</strong> a été utilisé. <code>L1-4</code> = 4 lettres (A, C, G, T). <code>L1-5m</code> = 5 lettres avec méthylation. <code>L1-3-goldman</code> = le code ternaire de Goldman 2013, sans homopolymères.",
+      meta: [["Obligatoire", "oui"], ["Valeurs", "L1-4 · L1-5m · L1-3-goldman"], ["Coût", "~7 octets"]]
+    },
+    l4: {
+      color: "var(--c-l4)",
+      key: "L4",
+      title: "Codec de correction d'erreurs",
+      body: "Dit <strong>comment réparer</strong> les erreurs de lecture. <code>rs255-223</code> = Reed-Solomon (corrige jusqu'à 16 erreurs par bloc, comme les QR codes et les sondes Voyager). <code>none</code> = aucune parité (le mode du démo navigateur).",
+      meta: [["Obligatoire", "oui"], ["Valeurs", "rs255-223 · none"], ["Coût", "~11 octets"]]
+    },
+    type: {
+      color: "var(--c-type)",
+      key: "TYPE",
+      title: "Type MIME du contenu",
+      body: "Dit <strong>ce que c'est</strong> une fois décodé : texte, image JPEG, PDF, archive… C'est l'équivalent de l'extension <code>.jpg</code> d'un fichier classique. Le décodeur sait ainsi comment présenter le contenu.",
+      meta: [["Obligatoire", "oui"], ["Exemple", "text/plain · image/jpeg"], ["Coût", "~15 octets"]]
+    },
+    len: {
+      color: "var(--c-len)",
+      key: "LEN",
+      title: "Longueur du payload (octets)",
+      body: "Dit <strong>où s'arrête le vrai contenu</strong> et où commence le bourrage (padding). Sans ce champ, le décodeur ne saurait pas couper proprement : il rendrait le contenu suivi de zéros parasites.",
+      meta: [["Obligatoire", "oui"], ["Exemple", "4096"], ["Coût", "~5-9 octets"]]
+    },
+    id: {
+      color: "var(--c-id)",
+      key: "ID",
+      title: "Identifiant unique du bloc",
+      body: "Permet de <strong>retrouver et réassembler</strong> les blocs quand un fichier est découpé en plusieurs morceaux. C'est la clé qui dit « ce fragment fait partie de tel ensemble ».",
+      meta: [["Obligatoire", "oui"], ["Exemple", "demo-block-1"], ["Coût", "variable"]]
+    },
+    checksum: {
+      color: "var(--c-checksum)",
+      key: "CHECKSUM",
+      title: "Empreinte d'intégrité (optionnel)",
+      body: "Permet de <strong>vérifier que rien n'a été corrompu</strong> silencieusement. On recalcule l'empreinte du contenu décodé et on la compare à celle-ci. Si elles diffèrent, une erreur s'est glissée.",
+      meta: [["Obligatoire", "non"], ["Exemple", "sha256:… · blake3:…"], ["Coût", "~70 octets"]]
+    }
+  };
+
+  const explain = document.getElementById("explain");
+  const exKey = document.getElementById("ex-key");
+  const exTitle = document.getElementById("ex-title");
+  const exBody = document.getElementById("ex-body");
+  const exMeta = document.getElementById("ex-meta");
+
+  function show(k) {
+    const f = FIELDS[k];
+    if (!f) return;
+    exKey.textContent = f.key;
+    exTitle.textContent = f.title;
+    exBody.innerHTML = f.body;
+    exMeta.innerHTML = f.meta.map(([a, b]) => `<span><b>${a}</b> : ${b}</span>`).join("");
+    explain.style.borderLeftColor = f.color;
+    // sync active states
+    document.querySelectorAll(".tok").forEach(t => t.classList.toggle("active", t.dataset.k === k));
+    document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.k === k));
+  }
+
+  // Wire up the tokens
+  document.querySelectorAll(".tok[data-k]").forEach(t => {
+    if (t.dataset.k === "delim") return; // delim has its own entry but is less interesting; still clickable
+    t.addEventListener("click", () => show(t.dataset.k));
+    t.addEventListener("mouseenter", () => show(t.dataset.k));
+  });
+  document.querySelectorAll(".tok.delim").forEach(t => t.addEventListener("click", () => show("delim")));
+
+  // Build chips
+  const chips = document.getElementById("chips");
+  const order = ["version", "l1", "l4", "type", "len", "id", "checksum"];
+  order.forEach(k => {
+    const c = document.createElement("div");
+    c.className = "chip"; c.dataset.k = k;
+    c.textContent = FIELDS[k].key;
+    c.style.color = FIELDS[k].color;
+    c.addEventListener("click", () => show(k));
+    chips.appendChild(c);
+  });
+
+  // Byte breakdown bar
+  const bar = document.getElementById("bytes-bar");
+  const segs = [
+    { w: 90, color: "var(--accent)", label: "étiquette 70 o" },
+    { w: 9, color: "var(--c-id)", label: "Bonjour" },
+    { w: 1, color: "var(--text-faint)", label: "" },
+  ];
+  segs.forEach(s => {
+    const d = document.createElement("div");
+    d.className = "bytes-seg";
+    d.style.width = s.w + "%";
+    d.style.background = s.color;
+    d.textContent = s.label;
+    bar.appendChild(d);
+  });
+
+  // Default selection
+  show("version");
+</script>
+
+</body>
+</html>
