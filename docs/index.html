@@ -238,6 +238,18 @@
   .demo-note.warn { background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.3); color: #d99a3a; }
   .demo-note.good { background: rgba(0,212,168,0.08); border: 1px solid rgba(0,212,168,0.3); color: var(--accent); }
   .demo-note strong { color: inherit; }
+  .demo-tabs { display: flex; gap: 6px; margin-top: 28px; margin-bottom: 4px; }
+  .demo-tab { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 16px; border-radius: 8px; font-family: inherit; font-size: 13px; cursor: pointer; transition: all .15s; }
+  .demo-tab:hover { color: var(--text); }
+  .demo-tab.active { background: var(--accent); color: #001a14; border-color: var(--accent); font-weight: 600; }
+  .demo-dropzone { position: relative; }
+  .dropzone-inner { border: 2px dashed var(--border); border-radius: 8px; padding: 28px 16px; text-align: center; cursor: pointer; transition: all .15s; background: #050507; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .dropzone-inner:hover, .dropzone-inner.dragover { border-color: var(--accent); background: rgba(0,212,168,0.04); }
+  .dropzone-icon { font-size: 30px; }
+  .dropzone-text { font-size: 14px; color: var(--text); }
+  .dropzone-text span { color: var(--text-dim); font-size: 13px; }
+  .dropzone-hint { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
+  .demo-preview { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--border); display: block; }
   .demo-actions { display: flex; align-items: center; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
   .demo-result { font-size: 14px; font-family: "SF Mono", monospace; color: var(--text-dim); }
   .demo-details { margin-top: 32px; }
@@ -358,13 +370,29 @@
     <div class="section-label">Try it — live in your browser</div>
     <h2>Encode anything into DNA, right now.</h2>
     <p class="section-lede">
-      Type a message below. The L1 + L5 encoder runs locally in your browser — same algorithms as the Python reference, no server roundtrip, no data leaves this page.
+      Type a message — <strong style="color:var(--text)">or drop an image</strong>. AeonScript encodes <em>bytes</em>, not text, so any file works the same way. The L1 + L5 encoder runs locally in your browser — no server, no data leaves this page.
     </p>
+
+    <div class="demo-tabs">
+      <button class="demo-tab active" data-mode="text">📝 Text</button>
+      <button class="demo-tab" data-mode="image">🖼️ Image</button>
+    </div>
 
     <div class="demo-grid">
       <div class="demo-card">
         <div class="demo-label">1. Your payload</div>
+        <!-- Text mode -->
         <textarea id="demo-input" rows="5" spellcheck="false">The first message I want to preserve for a thousand years.</textarea>
+        <!-- Image mode -->
+        <div id="demo-dropzone" class="demo-dropzone" style="display:none;">
+          <input type="file" id="demo-file" accept="image/*" hidden>
+          <div class="dropzone-inner" id="dropzone-inner">
+            <div class="dropzone-icon">🖼️</div>
+            <div class="dropzone-text">Glisse une image ici<br><span>ou clique pour choisir</span></div>
+            <div class="dropzone-hint">JPEG, PNG, GIF, WebP — garde-la petite (&lt; 50 Ko) pour un encodage rapide</div>
+          </div>
+          <img id="demo-input-preview" class="demo-preview" style="display:none;" alt="aperçu">
+        </div>
         <div class="demo-stats" id="demo-input-stats">— bytes</div>
       </div>
       <div class="demo-card">
@@ -372,6 +400,11 @@
         <pre id="demo-output" class="demo-output mono">Click "Encode" to see the oligos.</pre>
         <div class="demo-stats" id="demo-output-stats">— oligos · — bases · — bits/base</div>
         <div class="demo-note" id="demo-density-note"></div>
+        <!-- Round-trip image preview -->
+        <div id="demo-rt-wrap" style="display:none; margin-top:12px;">
+          <div class="demo-label" style="margin-bottom:6px;">↩ Decoded back from DNA</div>
+          <img id="demo-output-preview" class="demo-preview" alt="image reconstruite">
+        </div>
       </div>
     </div>
 
@@ -512,41 +545,59 @@
   // ---- UI wiring -----------------------------------------------------------
   const $ = (id) => document.getElementById(id);
   let lastOligos = null;
+  let lastPayloadBytes = null;   // the exact bytes that were encoded (for round-trip compare)
+  let demoMode = "text";          // "text" | "image"
+  let imageBytes = null;          // Uint8Array of the loaded image
+  let imageMime = "image/png";    // MIME of the loaded image
+  const MAX_DISPLAY_OLIGOS = 24;  // cap on how many oligos we print (images = thousands)
+
+  function currentPayload() {
+    if (demoMode === "image") {
+      return { bytes: imageBytes || new Uint8Array(0), mime: imageMime, id: "demo-image-1" };
+    }
+    return { bytes: new TextEncoder().encode($("demo-input").value), mime: "text/plain", id: "demo-block-1" };
+  }
 
   function updateInputStats() {
-    const text = $("demo-input").value;
-    const bytes = new TextEncoder().encode(text).length;
-    $("demo-input-stats").textContent = `${bytes} byte${bytes === 1 ? "" : "s"}`;
+    const { bytes } = currentPayload();
+    $("demo-input-stats").textContent = `${bytes.length} byte${bytes.length === 1 ? "" : "s"}`;
   }
 
   function runEncode() {
     try {
-      const text = $("demo-input").value;
-      const bytes = new TextEncoder().encode(text);
-      const { tag, oligos } = encodeL1L5(bytes, "demo-block-1", "text/plain");
+      const { bytes, mime, id } = currentPayload();
+      if (bytes.length === 0) {
+        $("demo-result").textContent = demoMode === "image" ? "Choose an image first" : "Type something first";
+        $("demo-result").style.color = "var(--warn)";
+        return;
+      }
+      const { tag, oligos } = encodeL1L5(bytes, id, mime);
       lastOligos = oligos;
+      lastPayloadBytes = bytes;
       const totalBases = oligos.reduce((s, o) => s + o.length, 0);
-      const density = bytes.length === 0 ? 0 : (bytes.length * 8 / totalBases);
-      const oligoLines = oligos.map((o, i) => {
-        const lbl = `[${String(i).padStart(2, "0")}]`;
-        return `${lbl} (${o.length}b) ${o}`;
-      }).join("\n");
-      $("demo-output").textContent = `# Semantic tag:\n${tag}\n\n# ${oligos.length} oligo${oligos.length === 1 ? "" : "s"}:\n${oligoLines}`;
+      const density = bytes.length * 8 / totalBases;
+
+      // Cap the oligo listing for large payloads (images can be thousands)
+      const shown = oligos.slice(0, MAX_DISPLAY_OLIGOS);
+      const oligoLines = shown.map((o, i) => `[${String(i).padStart(2, "0")}] (${o.length}b) ${o}`).join("\n");
+      const more = oligos.length > MAX_DISPLAY_OLIGOS ? `\n… and ${oligos.length - MAX_DISPLAY_OLIGOS} more oligos (omitted for display)` : "";
+      $("demo-output").textContent = `# Semantic tag:\n${tag}\n\n# ${oligos.length} oligo${oligos.length === 1 ? "" : "s"}:\n${oligoLines}${more}`;
       $("demo-output-stats").textContent = `${oligos.length} oligos · ${totalBases} bases · ${density.toFixed(3)} bits/base`;
       $("demo-result").textContent = "✓ encoded";
       $("demo-result").style.color = "var(--accent)";
+      $("demo-rt-wrap").style.display = "none"; // hide any previous decoded image
 
-      // --- Adaptive density note: explain the tag-overhead effect ---
+      // --- Adaptive density note ---
       const note = $("demo-density-note");
       const tagBytes = new TextEncoder().encode(tag).length;
-      const payloadPct = bytes.length === 0 ? 0 : Math.round(bytes.length / (tagBytes + bytes.length) * 100);
+      const payloadPct = Math.round(bytes.length / (tagBytes + bytes.length) * 100);
       note.className = "demo-note show";
       if (bytes.length < 200) {
         note.classList.add("warn");
-        note.innerHTML = `⚠️ <strong>Low density is expected here.</strong> Only <strong>${payloadPct}%</strong> of these bases are your text — the rest is the fixed ${tagBytes}-byte self-describing tag. That tag is the same size whether you encode 7 bytes or 7 MB. Try pasting <strong>500+ characters</strong> to watch the density climb toward the real ~1.75 bits/base.`;
+        note.innerHTML = `⚠️ <strong>Low density is expected here.</strong> Only <strong>${payloadPct}%</strong> of these bases are your payload — the rest is the fixed ${tagBytes}-byte self-describing tag. That tag is the same size whether you encode 7 bytes or 7 MB. Try a bigger payload to watch the density climb toward ~1.75 bits/base.`;
       } else {
         note.classList.add("good");
-        note.innerHTML = `✓ <strong>${payloadPct}% payload.</strong> At this size the fixed ${tagBytes}-byte tag is becoming negligible. On a real file (≥10 KB) density approaches <strong>~1.75 bits/base</strong> — about 88% of the Shannon limit for the 4-letter DNA channel.`;
+        note.innerHTML = `✓ <strong>${payloadPct}% payload.</strong> At this size the fixed ${tagBytes}-byte tag is becoming negligible. Density approaches <strong>~1.75 bits/base</strong> — about 88% of the Shannon limit for the 4-letter DNA channel. ${demoMode === "image" ? "This is a real image, encoded as bytes — same pipeline as text." : ""}`;
       }
     } catch (e) {
       $("demo-output").textContent = `Error: ${e.message}`;
@@ -555,13 +606,28 @@
     }
   }
 
+  function bytesEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+
   function runRoundtrip() {
-    if (!lastOligos) { runEncode(); }
+    if (!lastOligos) { runEncode(); if (!lastOligos) return; }
     try {
       const { fields, payload } = decodeL1L5(lastOligos);
-      const text = new TextDecoder().decode(payload);
-      const original = $("demo-input").value;
-      if (text === original) {
+      const ok = lastPayloadBytes && bytesEqual(payload, lastPayloadBytes);
+      if (demoMode === "image" && ok) {
+        // Rebuild the image from the decoded bytes and show it
+        const blob = new Blob([payload], { type: fields.TYPE || imageMime });
+        const url = URL.createObjectURL(blob);
+        const img = $("demo-output-preview");
+        img.onload = () => URL.revokeObjectURL(url);
+        img.src = url;
+        $("demo-rt-wrap").style.display = "block";
+        $("demo-result").textContent = `✓ Image recovered bit-for-bit — ${payload.length} bytes through DNA and back`;
+        $("demo-result").style.color = "var(--accent)";
+      } else if (ok) {
         $("demo-result").textContent = `✓ Round-trip OK — recovered ${payload.length} bytes (${fields.LEN} declared in tag)`;
         $("demo-result").style.color = "var(--accent)";
       } else {
@@ -576,13 +642,53 @@
 
   function runClear() {
     $("demo-input").value = "";
-    $("demo-output").textContent = "Click \"Encode\" to see the oligos.";
+    imageBytes = null;
+    $("demo-input-preview").style.display = "none";
+    $("demo-input-preview").src = "";
+    $("dropzone-inner").style.display = "flex";
+    $("demo-file").value = "";
+    $("demo-output").textContent = 'Click "Encode" to see the oligos.';
     $("demo-output-stats").textContent = "— oligos · — bases · — bits/base";
     $("demo-result").textContent = "";
     $("demo-density-note").className = "demo-note";
     $("demo-density-note").innerHTML = "";
+    $("demo-rt-wrap").style.display = "none";
     lastOligos = null;
+    lastPayloadBytes = null;
     updateInputStats();
+  }
+
+  function loadImageFile(file) {
+    if (!file || !file.type.startsWith("image/")) {
+      $("demo-result").textContent = "✗ Please choose an image file";
+      $("demo-result").style.color = "var(--warn)";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      imageBytes = new Uint8Array(ev.target.result);
+      imageMime = file.type;
+      // preview
+      const blob = new Blob([imageBytes], { type: imageMime });
+      const url = URL.createObjectURL(blob);
+      const prev = $("demo-input-preview");
+      prev.onload = () => URL.revokeObjectURL(url);
+      prev.src = url;
+      prev.style.display = "block";
+      $("dropzone-inner").style.display = "none";
+      updateInputStats();
+      $("demo-result").textContent = `✓ Image loaded (${imageBytes.length} bytes) — click Encode`;
+      $("demo-result").style.color = "var(--accent)";
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function switchMode(mode) {
+    demoMode = mode;
+    document.querySelectorAll(".demo-tab").forEach(t => t.classList.toggle("active", t.dataset.mode === mode));
+    $("demo-input").style.display = mode === "text" ? "block" : "none";
+    $("demo-dropzone").style.display = mode === "image" ? "block" : "none";
+    runClear();
   }
 
   if (document.readyState === "loading") {
@@ -596,6 +702,17 @@
     $("demo-roundtrip").addEventListener("click", runRoundtrip);
     $("demo-clear").addEventListener("click", runClear);
     $("demo-input").addEventListener("input", updateInputStats);
+    document.querySelectorAll(".demo-tab").forEach(t => t.addEventListener("click", () => switchMode(t.dataset.mode)));
+
+    // File picker + drag/drop
+    const dz = $("dropzone-inner");
+    dz.addEventListener("click", () => $("demo-file").click());
+    $("demo-file").addEventListener("change", (e) => loadImageFile(e.target.files[0]));
+    const zone = $("demo-dropzone");
+    ["dragover", "dragenter"].forEach(evt => zone.addEventListener(evt, (e) => { e.preventDefault(); dz.classList.add("dragover"); }));
+    ["dragleave", "drop"].forEach(evt => zone.addEventListener(evt, (e) => { e.preventDefault(); dz.classList.remove("dragover"); }));
+    zone.addEventListener("drop", (e) => { if (e.dataTransfer.files[0]) loadImageFile(e.dataTransfer.files[0]); });
+
     updateInputStats();
   }
 })();
