@@ -143,6 +143,19 @@ Domaines où l'aide est particulièrement précieuse :
 
 ---
 
+## Écosystème
+
+AeonScript est le socle d'une famille de projets ouverts :
+
+| Projet | Rôle | Lien |
+|--------|------|------|
+| **AeonScript** | Le standard de stockage d'information sur ADN | [aeonscript.org](https://aeonscript.org) |
+| **AeonProof** | Coffre-fort de preuves d'authenticité à l'ère des fakes — la crypto détecte, l'ADN archive | [proof.aeonscript.org](https://proof.aeonscript.org) · [repo](https://github.com/aeonscript-spec/aeonproof) |
+
+> AeonProof est bâti sur AeonScript : il grave les preuves d'authenticité (hash + signature + horodatage) dans l'ADN via le format AeonScript.
+
+---
+
 ## Licence
 
 - **Code** (`reference/`) : MIT License
