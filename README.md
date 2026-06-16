@@ -39,7 +39,7 @@ AeonScript est :
 ### Installation
 
 ```bash
-git clone https://github.com/<TBD>/aeonscript.git
+git clone https://github.com/aeonscript-spec/aeonscript.git
 cd aeonscript/reference
 pip install -e .
 ```
@@ -174,7 +174,7 @@ Si vous utilisez AeonScript dans une publication académique :
   title = {AeonScript: An Open Standard for DNA-Based Information Archival},
   author = {{The AeonScript Contributors}},
   year = {2026},
-  url = {https://github.com/<TBD>/aeonscript},
+  url = {https://github.com/aeonscript-spec/aeonscript},
   note = {Version 0.1}
 }
 ```
