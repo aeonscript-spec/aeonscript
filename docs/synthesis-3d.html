@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeonScript — Synthèse d'ADN en 3D</title>
+<meta name="description" content="Simulation 3D : comment des données numériques deviennent une molécule d'ADN, base par base, par synthèse phosphoramidite.">
+<meta property="og:title" content="AeonScript — La synthèse d'ADN en 3D">
+<meta property="og:description" content="Regardez des données devenir une molécule physique, base par base. Le vrai procédé chimique, animé.">
+<meta property="og:image" content="https://aeonscript.org/og-image.svg">
+<style>
+  :root{
+    --bg:#0a0a0b; --card:#101013; --border:#1d1d22; --text:#e8e8ec;
+    --dim:#8a8a96; --faint:#4a4a55; --accent:#00d4a8;
+    --A:#e74c3c; --C:#3498db; --G:#2ecc71; --T:#f39c12;
+    --mono:"SF Mono","JetBrains Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,"Inter","Segoe UI",Roboto,sans-serif;line-height:1.55}
+  header{position:fixed;top:0;left:0;right:0;padding:13px 22px;background:rgba(10,10,11,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);z-index:100;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px}
+  .brand svg{width:20px;height:20px}
+  .brand-mode{color:var(--accent);font-size:11px;padding:3px 9px;background:rgba(0,212,168,.1);border:1px solid rgba(0,212,168,.3);border-radius:100px;margin-left:6px;font-family:var(--mono)}
+  .top-links{display:flex;gap:16px;font-size:13px}
+  .top-links a{color:var(--dim);text-decoration:none}.top-links a:hover{color:var(--text)}
+  @media(max-width:600px){.top-links{display:none}}
+
+  #stage{position:absolute;inset:0;top:51px}
+  #c{position:absolute;inset:0}
+
+  #panel{position:absolute;right:0;top:0;bottom:0;width:440px;padding:54px 36px;overflow-y:auto;
+    background:linear-gradient(90deg,rgba(10,10,11,0) 0%,rgba(10,10,11,.55) 22%,rgba(10,10,11,.93) 100%);pointer-events:auto}
+  @media(max-width:900px){#panel{left:0;width:100%;top:auto;bottom:0;height:46%;background:linear-gradient(180deg,rgba(10,10,11,0),rgba(10,10,11,.94) 28%);padding:20px}}
+
+  .step-badge{display:inline-block;padding:4px 12px;background:rgba(0,212,168,.1);border:1px solid rgba(0,212,168,.3);border-radius:100px;font-size:11px;color:var(--accent);font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+  .step-title{font-size:clamp(22px,3vw,30px);line-height:1.1;letter-spacing:-.02em;font-weight:600;margin-bottom:12px}
+  .step-title em{color:var(--accent);font-style:normal}
+  .step-body{color:var(--dim);font-size:14.5px;line-height:1.6;margin-bottom:18px}
+  .step-body strong{color:var(--text)}
+  .step-body code{background:#050507;border:1px solid var(--border);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:12px;color:var(--accent)}
+
+  .controls{display:flex;gap:10px;margin-top:18px;padding-top:18px;border-top:1px solid var(--border);flex-wrap:wrap}
+  .btn{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+  .btn-primary{background:var(--accent);color:#001a14;font-weight:600}.btn-primary:hover{background:#00f0c0}
+  .btn-sec{background:transparent;color:var(--dim);border:1px solid var(--border)}.btn-sec:hover{color:var(--text);border-color:var(--dim)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  #cycle{position:absolute;left:22px;top:64px;display:flex;flex-direction:column;gap:6px;z-index:50}
+  .cyc{display:flex;align-items:center;gap:8px;font-size:12px;font-family:var(--mono);color:var(--faint);padding:5px 10px;border-radius:6px;border:1px solid transparent;transition:all .2s}
+  .cyc .n{width:18px;height:18px;border-radius:50%;border:1px solid var(--faint);display:flex;align-items:center;justify-content:center;font-size:10px}
+  .cyc.on{color:var(--accent);background:rgba(0,212,168,.08);border-color:rgba(0,212,168,.3)}
+  .cyc.on .n{border-color:var(--accent);background:var(--accent);color:#001a14}
+  .cyc.done .n{border-color:var(--accent);color:var(--accent)}
+
+  #seqbar{position:absolute;left:22px;bottom:20px;right:460px;z-index:50;background:rgba(10,10,11,.82);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:8px;padding:10px 14px}
+  @media(max-width:900px){#seqbar{right:22px;bottom:auto;top:64px;left:auto;width:auto;max-width:46%}}
+  .seq-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-family:var(--mono)}
+  .seq{font-family:var(--mono);font-size:14px;letter-spacing:2px;word-break:break-all;line-height:1.5}
+  .seq .b{opacity:.25}.seq .built{opacity:1}
+  .seq .A{color:var(--A)}.seq .C{color:var(--C)}.seq .G{color:var(--G)}.seq .T{color:var(--T)}
+
+  #legend{position:absolute;right:460px;bottom:20px;z-index:50;display:flex;gap:12px;font-size:11px;font-family:var(--mono);color:var(--dim);background:rgba(10,10,11,.8);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+  @media(max-width:900px){#legend{display:none}}
+  #legend .lg{display:flex;align-items:center;gap:4px}
+  #legend .lg::before{content:"";width:9px;height:9px;border-radius:50%}
+  .lg.A::before{background:var(--A)}.lg.C::before{background:var(--C)}.lg.G::before{background:var(--G)}.lg.T::before{background:var(--T)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M6 6 Q16 16 26 6 M6 16 Q16 26 26 16 M6 26 Q16 36 26 26" stroke="#00d4a8" fill="none" stroke-width="1.8" stroke-linecap="round"/></svg>
+    AeonScript<span class="brand-mode">SYNTHÈSE 3D</span>
+  </div>
+  <div class="top-links">
+    <a href="index.html">← site</a>
+    <a href="explainer-3d.html">Explainer 3D</a>
+    <a href="https://github.com/aeonscript-spec/aeonscript">GitHub</a>
+  </div>
+</header>
+
+<div id="stage">
+  <canvas id="c"></canvas>
+
+  <div id="cycle">
+    <div class="cyc" data-ph="0"><span class="n">1</span> Déprotection</div>
+    <div class="cyc" data-ph="1"><span class="n">2</span> Couplage</div>
+    <div class="cyc" data-ph="2"><span class="n">3</span> Coiffage</div>
+    <div class="cyc" data-ph="3"><span class="n">4</span> Oxydation</div>
+  </div>
+
+  <div id="seqbar">
+    <div class="seq-label">Séquence cible (données → ADN)</div>
+    <div class="seq" id="seq"></div>
+  </div>
+  <div id="legend"><span class="lg A">A</span><span class="lg C">C</span><span class="lg G">G</span><span class="lg T">T</span></div>
+
+  <aside id="panel">
+    <div class="step-badge" id="badge">Étape 1 / 8</div>
+    <h1 class="step-title" id="title">Des données à la <em>matière</em>.</h1>
+    <div class="step-body" id="body">On part d'un fichier. AeonScript l'a transformé en une séquence de lettres A, C, G, T. Maintenant, il faut fabriquer la vraie molécule — base par base, par chimie.</div>
+    <div class="controls">
+      <button class="btn btn-sec" id="prev" disabled>← Précédent</button>
+      <button class="btn btn-primary" id="next">Continuer →</button>
+      <button class="btn btn-sec" id="play">▶ Lancer la synthèse</button>
+    </div>
+  </aside>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const canvas = document.getElementById('c');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth/(window.innerHeight-51), 0.1, 200);
+camera.position.set(0, 4, 26);
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setSize(window.innerWidth, window.innerHeight-51);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+canvas.style.top='51px'; canvas.style.height='calc(100% - 51px)';
+
+scene.add(new THREE.AmbientLight(0xffffff,0.55));
+const key=new THREE.DirectionalLight(0xffffff,0.85); key.position.set(8,10,8); scene.add(key);
+const fill=new THREE.DirectionalLight(0x00d4a8,0.4); fill.position.set(-8,-2,5); scene.add(fill);
+
+const COL={A:0xe74c3c,C:0x3498db,G:0x2ecc71,T:0xf39c12};
+const EMI={A:0x6e1c12,C:0x14527a,G:0x176e34,T:0x7a4e0c};
+
+// deterministic target sequence
+function lcg(s){return ()=>(s=(s*1664525+1013904223)>>>0)/0xffffffff;}
+const rand=lcg(7);
+const TARGET=[]; for(let i=0;i<24;i++) TARGET.push("ACGT"[Math.floor(rand()*4)]);
+
+// world groups
+const world=new THREE.Group(); scene.add(world);
+
+// solid support bead at bottom
+const bead=new THREE.Mesh(new THREE.SphereGeometry(2.0,32,32),
+  new THREE.MeshStandardMaterial({color:0x4a4a55,metalness:0.3,roughness:0.6}));
+bead.position.y=-7; world.add(bead);
+const beadRing=new THREE.Mesh(new THREE.TorusGeometry(2.0,0.12,12,40),
+  new THREE.MeshStandardMaterial({color:0x00d4a8,emissive:0x006e57,emissiveIntensity:0.4}));
+beadRing.position.y=-7; beadRing.rotation.x=Math.PI/2; world.add(beadRing);
+
+// growing strand
+const STEP_Y=0.95, R=1.4;
+const built=[]; // {mesh, bar, base, index}
+function addBase(i, base, opacity=1){
+  const angle=i*0.6;
+  const y=-7+2.0+0.4 + i*STEP_Y;
+  const mat=new THREE.MeshStandardMaterial({color:COL[base],emissive:EMI[base],emissiveIntensity:0.35,metalness:0.1,roughness:0.5,transparent:true,opacity});
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.5,18,18),mat);
+  m.position.set(Math.cos(angle)*R, y, Math.sin(angle)*R);
+  world.add(m);
+  // backbone connector to previous
+  const bar=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,STEP_Y,8),
+    new THREE.MeshStandardMaterial({color:0x8a8a96,metalness:0.2,roughness:0.7,transparent:true,opacity}));
+  const prevAngle=(i-1)*0.6, prevY=y-STEP_Y;
+  const px=i===0?0:Math.cos(prevAngle)*R, pz=i===0?0:Math.sin(prevAngle)*R, py=i===0?(-7+2.0):prevY;
+  bar.position.set((m.position.x+px)/2,(m.position.y+py)/2,(m.position.z+pz)/2);
+  bar.lookAt(px,py,pz); bar.rotateX(Math.PI/2);
+  world.add(bar);
+  built.push({mesh:m,bar,base,index:i});
+  return built[built.length-1];
+}
+
+// incoming nucleotide (for coupling animation)
+let incoming=null;
+function spawnIncoming(base){
+  const mat=new THREE.MeshStandardMaterial({color:COL[base],emissive:EMI[base],emissiveIntensity:0.6,metalness:0.1,roughness:0.4,transparent:true,opacity:0.95});
+  incoming=new THREE.Mesh(new THREE.SphereGeometry(0.55,18,18),mat);
+  incoming.userData.base=base;
+  world.add(incoming);
+}
+
+// vial (final pool)
+const vial=new THREE.Group(); vial.visible=false; scene.add(vial);
+const glass=new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.2,8,28,1,true),
+  new THREE.MeshPhysicalMaterial({color:0xaaccdd,transparent:true,opacity:0.16,transmission:0.85,roughness:0.05,clearcoat:1,side:THREE.DoubleSide}));
+vial.add(glass);
+const cap=new THREE.Mesh(new THREE.CylinderGeometry(2.3,2.3,0.7,28),new THREE.MeshStandardMaterial({color:0x00d4a8,metalness:0.6,roughness:0.3})); cap.position.y=4.3; vial.add(cap);
+const powder=new THREE.Group();
+for(let i=0;i<140;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(0.09+Math.random()*0.05,6,6),new THREE.MeshStandardMaterial({color:0xe8e8ec,emissive:0x00a884,emissiveIntensity:0.25}));p.position.set((Math.random()-0.5)*3.4,-3.6+Math.random()*2.2,(Math.random()-0.5)*3.4);powder.add(p);} vial.add(powder);
+
+// ---- cycle indicator ----
+function setCycle(phase){ // -1 none, 0..3
+  document.querySelectorAll('.cyc').forEach((el,i)=>{
+    el.classList.toggle('on', i===phase);
+    el.classList.toggle('done', phase>i || phase===-2);
+  });
+}
+function setSeq(builtCount){
+  document.getElementById('seq').innerHTML = TARGET.map((b,i)=>
+    `<span class="b ${b} ${i<builtCount?'built':''}">${b}</span>`).join('');
+}
+setSeq(0);
+
+// ---- steps ----
+const steps=[
+  { badge:'Étape 1 / 8', title:'Des données à la <em>matière</em>.',
+    body:`On part d'un fichier. AeonScript l'a transformé en une séquence de lettres <strong>A, C, G, T</strong>. Maintenant il faut fabriquer la vraie molécule — base par base, par chimie. Voici le procédé réel : la <strong>synthèse phosphoramidite</strong>.`,
+    setup(){ resetSynthesis(); cam(0,4,26); setCycle(-1); } },
+  { badge:'Étape 2 / 8', title:'Le <em>support solide</em>.',
+    body:`La synthèse ne flotte pas dans le vide. Elle démarre sur une <strong>bille solide</strong> (le support), dans une colonne. La première base y est ancrée chimiquement. Tout le reste va se construire dessus, vers le haut.`,
+    setup(){ resetSynthesis(); addBase(0,TARGET[0]); setSeq(1); cam(0,-3,16); setCycle(-1); } },
+  { badge:'Étape 3 / 8', title:'1 · <em>Déprotection</em>.',
+    body:`Chaque base ajoutée porte un "capuchon" protecteur (groupe DMT) qui l'empêche de réagir n'importe comment. Première étape du cycle : on retire ce capuchon avec un acide doux, pour <strong>exposer le site réactif</strong> au sommet de la chaîne.`,
+    setup(){ ensureBase(0); cam(2,2,12); setCycle(0); pulseTop(); } },
+  { badge:'Étape 4 / 8', title:'2 · <em>Couplage</em>.',
+    body:`La base suivante arrive sous forme de <strong>phosphoramidite</strong> (A, C, G ou T activé). Elle s'approche, se lie au site exposé, et <strong>allonge la chaîne d'un cran</strong>. C'est l'étape qui écrit réellement une lettre de la séquence.`,
+    setup(){ ensureBase(0); cam(2,2,12); setCycle(1); animateCoupling(TARGET[1]); } },
+  { badge:'Étape 5 / 8', title:'3 · Coiffage &nbsp;<em>+</em>&nbsp; 4 · Oxydation.',
+    body:`<strong>Coiffage</strong> : les rares chaînes qui ont raté le couplage sont bloquées définitivement — elles ne fausseront pas la suite (correction d'erreur intégrée). <strong>Oxydation</strong> : la liaison fragile est stabilisée en un squelette phosphate solide. La base est verrouillée.`,
+    setup(){ cam(2,1,13); setCycle(2); setTimeout(()=>setCycle(3),900); } },
+  { badge:'Étape 6 / 8', title:'Le cycle <em>se répète</em>.',
+    body:`Déprotection → couplage → coiffage → oxydation. <strong>Une base par cycle</strong>, encore et encore, ~1 lettre toutes les quelques minutes. La chaîne grandit jusqu'à reproduire exactement la séquence cible. Regardez-la se construire.`,
+    setup(){ cam(0,2,22); autoBuild(); } },
+  { badge:'Étape 7 / 8', title:'<em>Clivage</em> et libération.',
+    body:`Une fois la séquence complète, un dernier traitement <strong>détache l'oligo du support</strong> et retire les protections restantes. On obtient un brin d'ADN libre, prêt — la traduction physique exacte des données de départ.`,
+    setup(){ completeAll(); cam(0,2,24); setCycle(-2); detachAnim(); } },
+  { badge:'Étape 8 / 8', title:'Des millions, dans une <em>capsule</em>.',
+    body:`En pratique, on ne synthétise pas un brin mais des <strong>millions en parallèle</strong> sur une puce. Lyophilisés, ils tiennent dans un flacon de poudre sèche — l'archive : 0 watt, des siècles, inviolable. <strong>Les données sont devenues matière.</strong>`,
+    setup(){ showVial(); } },
+];
+
+let cur=0, target=new THREE.Vector3(0,4,26);
+function cam(x,y,z){ target.set(x,y,z); }
+function resetSynthesis(){
+  built.forEach(b=>{world.remove(b.mesh);world.remove(b.bar);}); built.length=0;
+  if(incoming){world.remove(incoming);incoming=null;}
+  world.visible=true; vial.visible=false; setSeq(0); autoState=null;
+}
+function ensureBase(n){ resetSynthesis(); for(let i=0;i<=n;i++) addBase(i,TARGET[i]); setSeq(n+1); }
+let pulseT=0,pulseOn=false;
+function pulseTop(){pulseOn=true;}
+let coupling=null;
+function animateCoupling(base){
+  // make sure base0 exists, animate incoming -> position 1
+  if(built.length<1){addBase(0,TARGET[0]);}
+  spawnIncoming(base);
+  const angle=1*0.6, y=-7+2.0+0.4+1*STEP_Y;
+  const dest=new THREE.Vector3(Math.cos(angle)*R,y,Math.sin(angle)*R);
+  incoming.position.set(dest.x+6, dest.y+3, dest.z+4);
+  coupling={t:0,dest,base};
+}
+let autoState=null;
+function autoBuild(){
+  // build from current count up to full, with cycling
+  autoState={i:Math.max(built.length,1), phase:0, t:0};
+}
+function completeAll(){
+  if(incoming){world.remove(incoming);incoming=null;}
+  autoState=null;
+  for(let i=built.length;i<TARGET.length;i++) addBase(i,TARGET[i]);
+  setSeq(TARGET.length); setCycle(-2);
+}
+let detach=null;
+function detachAnim(){ detach={t:0}; }
+function showVial(){
+  world.visible=false; vial.visible=true; vial.position.y=0; cam(0,1,18);
+}
+
+function render(n){
+  const s=steps[n];
+  document.getElementById('badge').textContent=s.badge;
+  document.getElementById('title').innerHTML=s.title;
+  document.getElementById('body').innerHTML=s.body;
+  document.getElementById('prev').disabled=n===0;
+  document.getElementById('next').disabled=n===steps.length-1;
+  document.getElementById('next').textContent=n===steps.length-1?'✓ Terminé':'Continuer →';
+  s.setup&&s.setup();
+}
+document.getElementById('prev').onclick=()=>{if(cur>0){cur--;render(cur);}};
+document.getElementById('next').onclick=()=>{if(cur<steps.length-1){cur++;render(cur);}};
+document.getElementById('play').onclick=()=>{cur=5;render(5);};
+addEventListener('keydown',e=>{if(e.key==='ArrowRight')document.getElementById('next').click();if(e.key==='ArrowLeft')document.getElementById('prev').click();});
+
+let t=0;
+function loop(){
+  requestAnimationFrame(loop); t+=0.016;
+  camera.position.lerp(target,0.045); camera.lookAt(0,built.length*0.4-3,0);
+  if(world.visible) world.rotation.y+=0.0035;
+  // top pulse during deprotection
+  if(pulseOn && built.length){ const top=built[built.length-1].mesh; top.material.emissiveIntensity=0.4+0.5*(0.5+0.5*Math.sin(t*6)); top.scale.setScalar(1+0.12*(0.5+0.5*Math.sin(t*6))); }
+  // coupling animation
+  if(coupling && incoming){
+    coupling.t=Math.min(1,coupling.t+0.02);
+    incoming.position.lerp(coupling.dest,0.08);
+    if(coupling.t>=1 && incoming.position.distanceTo(coupling.dest)<0.05){
+      world.remove(incoming); incoming=null;
+      addBase(1,coupling.base); setSeq(2); coupling=null; pulseOn=false;
+    }
+  }
+  // auto build cycle
+  if(autoState){
+    autoState.t+=0.016;
+    const phaseDur=0.5;
+    const ph=Math.floor((autoState.t%(phaseDur*4))/phaseDur);
+    setCycle(ph);
+    if(autoState.t>=phaseDur*4){
+      autoState.t=0;
+      if(autoState.i<TARGET.length){ addBase(autoState.i,TARGET[autoState.i]); setSeq(autoState.i+1); autoState.i++; }
+      else { autoState=null; setCycle(-2); }
+    }
+  }
+  // vial spin
+  if(vial.visible) vial.rotation.y+=0.005;
+  // detach: lift strand slightly
+  if(detach){ detach.t=Math.min(1,detach.t+0.01); world.position.y=detach.t*1.5; if(detach.t>=1)detach=null; }
+  else if(!vial.visible) world.position.y += (0-world.position.y)*0.05;
+  renderer.render(scene,camera);
+}
+addEventListener('resize',()=>{camera.aspect=window.innerWidth/(window.innerHeight-51);camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight-51);});
+render(0); loop();
+</script>
+</body>
+</html>
