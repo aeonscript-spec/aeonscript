@@ -17,8 +17,6 @@ the chosen permutation index is stored as a 4-base prefix per oligo.
 
 from __future__ import annotations
 
-from typing import Iterable
-
 # Canonical mapping (permutation 0)
 _CANONICAL = ("A", "C", "G", "T")
 

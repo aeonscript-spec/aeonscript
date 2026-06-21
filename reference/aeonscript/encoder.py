@@ -15,7 +15,6 @@ from __future__ import annotations
 import hashlib
 import os
 from pathlib import Path
-from typing import Iterable
 
 from .error_correction import encode_with_ecc
 from .physical import bytes_to_dna

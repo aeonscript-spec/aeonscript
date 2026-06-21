@@ -40,7 +40,6 @@ def inject_errors(oligos: list[str], n_errors: int, seed: int = 42) -> list[str]
     """Randomly mutate `n_errors` bases across the oligos."""
     rng = random.Random(seed)
     mutated = [list(o) for o in oligos]
-    total_bases = sum(len(o) for o in oligos)
     for _ in range(n_errors):
         # Choose a random (oligo_idx, base_idx)
         oligo_idx = rng.randint(0, len(mutated) - 1)
@@ -73,7 +72,7 @@ def main() -> int:
     print(f"Encoded into {len(oligos)} oligos, total {total_bases} bases.")
     print(f"Average oligo length: {total_bases / len(oligos):.0f} bases.")
     print(f"Theoretical density (Shannon, 2 bits/base): {bits_in / total_bases:.3f}")
-    print(f"  (lower than 2 because of RS parity + L5 tag overhead — expected.)")
+    print("  (lower than 2 because of RS parity + L5 tag overhead — expected.)")
     print()
 
     banner("Sample oligos (first 3)")
@@ -87,7 +86,7 @@ def main() -> int:
     else:
         print("  ✗ MISMATCH!")
         return 1
-    print(f"  Semantic tag parsed:")
+    print("  Semantic tag parsed:")
     for k, v in meta["tag"].items():
         print(f"    {k:12s} = {v}")
     print(f"  Errors corrected: {meta['errors_corrected']}")
@@ -100,7 +99,7 @@ def main() -> int:
     try:
         decoded2, meta2 = decode_oligos(noisy, return_metadata=True)
         if decoded2 == PASSAGE:
-            print(f"  ✓ Reed-Solomon recovered the original payload.")
+            print("  ✓ Reed-Solomon recovered the original payload.")
             print(f"  Errors corrected at decode: {meta2['errors_corrected']}")
         else:
             print("  ✗ Decoded payload differs from original (despite no exception).")

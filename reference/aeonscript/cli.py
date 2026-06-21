@@ -15,13 +15,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
 from . import __spec_version__, __version__
 from .decoder import decode_oligos
-from .encoder import encode_bytes, encode_file
+from .encoder import encode_file
 
 
 # ---------------------------------------------------------------------------
@@ -128,7 +127,7 @@ def cmd_inspect(args: argparse.Namespace) -> int:
     print(f"  payload bytes: {payload_size}")
     print(f"  density      : {density:.3f} bits/base utiles")
     print(f"  errors fixed : {meta['errors_corrected']}")
-    print(f"\n  Semantic tag:")
+    print("\n  Semantic tag:")
     for k, v in meta["tag"].items():
         val = v if len(v) <= 80 else v[:77] + "..."
         print(f"    {k:12s} = {val}")

@@ -12,8 +12,6 @@ Per SPEC-v0.1 §4.2, mandatory keys are:
 
 from __future__ import annotations
 
-from typing import Iterable
-
 MANDATORY_KEYS = ("AEONSCRIPT", "L1", "L4", "TYPE", "LEN", "ID")
 
 
