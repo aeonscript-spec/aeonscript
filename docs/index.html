@@ -565,6 +565,17 @@
     $("demo-input-stats").textContent = `${bytes.length} byte${bytes.length === 1 ? "" : "s"}`;
   }
 
+  // When the payload changes after an encode, the shown oligos are now stale:
+  // flag it so the user knows to re-encode / re-verify (the verify itself always
+  // re-encodes the current payload, so it can never report a stale "OK").
+  function onInputChange() {
+    updateInputStats();
+    if (lastOligos) {
+      $("demo-result").textContent = "↻ Input changed — click Encode or Round-trip verify to refresh";
+      $("demo-result").style.color = "var(--warn)";
+    }
+  }
+
   function runEncode() {
     try {
       const { bytes, mime, id } = currentPayload();
@@ -615,10 +626,19 @@
   }
 
   function runRoundtrip() {
-    if (!lastOligos) { runEncode(); if (!lastOligos) return; }
+    const { bytes } = currentPayload();
+    if (bytes.length === 0) {
+      $("demo-result").textContent = demoMode === "image" ? "Choose an image first" : "Type something first";
+      $("demo-result").style.color = "var(--warn)";
+      return;
+    }
+    // Always (re)encode the CURRENT payload, so the check reflects exactly what is
+    // in the box right now — never a stale previous encode.
+    runEncode();
+    if (!lastOligos) return;
     try {
       const { fields, payload } = decodeL1L5(lastOligos);
-      const ok = lastPayloadBytes && bytesEqual(payload, lastPayloadBytes);
+      const ok = bytesEqual(payload, bytes);
       if (demoMode === "image" && ok) {
         // Rebuild the image from the decoded bytes and show it
         const blob = new Blob([payload], { type: fields.TYPE || imageMime });
@@ -633,7 +653,7 @@
         $("demo-result").textContent = `✓ Round-trip OK — recovered ${payload.length} bytes (${fields.LEN} declared in tag)`;
         $("demo-result").style.color = "var(--accent)";
       } else {
-        $("demo-result").textContent = `✗ MISMATCH (encoder bug — please report)`;
+        $("demo-result").textContent = `✗ MISMATCH — decoded ${payload.length} bytes ≠ ${bytes.length}-byte input (encoder bug — please report)`;
         $("demo-result").style.color = "var(--warn)";
       }
     } catch (e) {
@@ -703,7 +723,7 @@
     $("demo-encode").addEventListener("click", runEncode);
     $("demo-roundtrip").addEventListener("click", runRoundtrip);
     $("demo-clear").addEventListener("click", runClear);
-    $("demo-input").addEventListener("input", updateInputStats);
+    $("demo-input").addEventListener("input", onInputChange);
     document.querySelectorAll(".demo-tab").forEach(t => t.addEventListener("click", () => switchMode(t.dataset.mode)));
 
     // File picker + drag/drop
