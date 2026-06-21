@@ -17,12 +17,35 @@ let recovered = decode_oligos(&oligos)?;
 assert_eq!(recovered.as_slice(), payload);
 ```
 
+## Command-line interface
+
+The crate ships an `aeonscript` binary that encodes any file into a FASTA pool
+of oligos and decodes it back, byte-for-byte:
+
+```bash
+cargo build --release
+
+# Encode an arbitrary file into a DNA oligo pool (FASTA)
+./target/release/aeonscript encode photo.jpg -o pool.fasta --mime image/jpeg --id photo
+
+# Decode the pool back to the original bytes
+./target/release/aeonscript decode pool.fasta -o photo.out.jpg
+#  → photo.out.jpg is identical to photo.jpg
+
+aeonscript --help      # full option list
+aeonscript --version   # crate + spec version
+```
+
+`encode` options: `-o/--out`, `--mime`, `--id`, `--len` (target oligo length, default 200, min 64).
+`decode` options: `-o/--out`. Without `-o`, output goes to stdout.
+
 ## Run
 
 ```bash
 cargo build --release
 cargo test
 cargo run --example smoke_test
+cargo run --bin aeonscript -- --help
 ```
 
 ## Status of layers
